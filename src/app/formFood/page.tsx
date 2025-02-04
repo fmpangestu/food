@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState } from "react";
@@ -42,6 +43,13 @@ const FoodRecommendation = () => {
   const [idealWeight, setIdealWeight] = useState<string | null>(null); // Ideal weight state
   const [calorieNeeds, setCalorieNeeds] = useState<number | null>(null); // Calorie needs state
   //   const router = useRouter();
+  const [dailySugarNeeds, setDailySugarNeeds] = useState<number | null>(null);
+  const [dailySodiumNeeds, setDailySodiumNeeds] = useState<number | null>(null);
+  const [dailyProteinNeeds, setDailyProteinNeeds] = useState<number | null>(
+    null
+  );
+  const [dailyCarbsNeeds, setDailyCarbsNeeds] = useState<number | null>(null);
+  const [saturedFatLimit, setSaturedFatLimit] = useState<number | null>(null);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -105,7 +113,36 @@ const FoodRecommendation = () => {
 
     return Math.round(bmr * (activityFactors[activityLevel] || 1.2)); // Default to sedentary if no match
   };
-
+  const calculateDailyNutrientNeeds = (
+    calories: number,
+    weight: number,
+    age: number,
+    gender: string
+  ) => {
+    const proteinNeeds = Math.round(weight * 0.8); // gram per kg berat badan
+    const sugarNeeds = Math.min((calories * 0.1) / 4, 50); // 1 gram gula = 4 kalori
+    setDailySugarNeeds(sugarNeeds); // gram, rekomendasi umum
+    let sodiumNeeds: number;
+    if (age < 1) {
+      sodiumNeeds = 1; // 1 gram per hari
+    } else if (age <= 3) {
+      sodiumNeeds = 2; // 2 gram per hari
+    } else if (age <= 6) {
+      sodiumNeeds = 3; // 3 gram per hari
+    } else if (age <= 10) {
+      sodiumNeeds = 5; // 5 gram per hari
+    } else {
+      sodiumNeeds = 6; // 6 gram per hari
+    }
+    const saturedFatLimit = gender === "male" ? 30 : 20;
+    const carbsNeeds = Math.round(calories * 0.55) / 4; // 1 gram karbohidrat = 4 kalori
+    setDailySodiumNeeds(sodiumNeeds); // mg, rekomendasi umum
+    setDailyProteinNeeds(proteinNeeds);
+    setDailySugarNeeds(sugarNeeds);
+    setDailySodiumNeeds(sodiumNeeds);
+    setDailyCarbsNeeds(carbsNeeds);
+    setSaturedFatLimit(saturedFatLimit);
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -130,6 +167,12 @@ const FoodRecommendation = () => {
     setIdealWeight(idealWeightRange);
     setCalorieNeeds(calorieNeedsValue);
 
+    calculateDailyNutrientNeeds(
+      calorieNeedsValue,
+      weightNum,
+      ageNum,
+      formData.gender
+    );
     // Evaluate weight status
     const [minIdealWeight, maxIdealWeight] = idealWeightRange
       .split(" - ")
@@ -140,7 +183,7 @@ const FoodRecommendation = () => {
       statusMessage = `Berat badan Anda kurang. Untuk mencapai berat ideal, tingkatkan asupan kalori harian Anda hingga ${surplusCalories} kcal dan fokus pada makanan bergizi tinggi.`;
     } else if (weightNum > maxIdealWeight) {
       const deficitCalories = calorieNeedsValue - 500; // Deficit calories for weight loss
-      statusMessage = `Berat badan Anda berlebih. Untuk mencapai berat ideal, kurangi asupan kalori harian menjadi sekitar ${deficitCalories} kcal dan tingkatkan aktivitas fisik.`;
+      statusMessage = `Berat badan Anda berlebih. Untuk mencapai berat ideal, kurangi asupan kalori harian menjadi sekitar ${deficitCalories} kcal.`;
     } else {
       statusMessage = `Berat badan Anda sudah ideal. Pertahankan pola makan dan aktivitas fisik untuk menjaga kesehatan Anda.`;
     }
@@ -259,12 +302,15 @@ const FoodRecommendation = () => {
           </select>
         </div>
 
-        {error && <p className="text-red-500">{error}</p>}
-        {success && <p className="text-green-500">{success}</p>}
+        {error && (
+          <p className="absolute top-0 w-[80%] text-red-500 px-2 py-1 rounded-lg">
+            {error}
+          </p>
+        )}
 
         <button
           type="submit"
-          className="bg-blue-500 text-white py-2 px-4 rounded"
+          className="bg-green-500 font-semibold w-full text-white py-2 px-4 rounded"
           disabled={loading}
         >
           {loading ? "Loading..." : "Submit"}
@@ -272,13 +318,25 @@ const FoodRecommendation = () => {
       </form>
 
       {idealWeight && (
-        <div className="mt-4">
+        <div className="mt-4 bg-white text-gray-700 rounded-lg p-4 ">
           <h2 className="text-xl font-semibold">
-            Berat Badan Ideal: {idealWeight}
+            Berat Badan IdealMu: {idealWeight}
           </h2>
-          <h3 className="mt-2">
-            Kebutuhan Kalori HarianMu: {calorieNeeds} kcal
-          </h3>
+          {success && (
+            <p className=" w-full text-white bg-green-500 px-2 py-1 rounded-lg">
+              Note: {success}
+            </p>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2">
+            <h3 className="mt-2">Kalori HarianMu: {calorieNeeds}kcal</h3>
+            <h3 className="mt-2">Protein HarianMu: {dailyProteinNeeds}g</h3>
+            <h3 className="mt-2">Gula HarianMu: {dailySugarNeeds}g</h3>
+            <h3 className="mt-2">Sodium HarianMu: {dailySodiumNeeds}g</h3>
+            <h3 className="mt-2">Karbohidrat HarianMu: {dailyCarbsNeeds}g</h3>
+            <h3 className="mt-2">
+              Batas Lemak Jenuh HarianMu: {saturedFatLimit}g
+            </h3>
+          </div>
           {/* {success && <p className="mt-2 text-green-500">{success}</p>} */}
         </div>
       )}
