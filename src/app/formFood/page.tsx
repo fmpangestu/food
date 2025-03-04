@@ -42,7 +42,6 @@ const FoodRecommendation = () => {
   const [success, setSuccess] = useState<string | null>(null); // Success state
   const [idealWeight, setIdealWeight] = useState<string | null>(null); // Ideal weight state
   const [calorieNeeds, setCalorieNeeds] = useState<number | null>(null); // Calorie needs state
-  //   const router = useRouter();
   const [dailySugarNeeds, setDailySugarNeeds] = useState<number | null>(null);
   const [dailySodiumNeeds, setDailySodiumNeeds] = useState<number | null>(null);
   const [dailyProteinNeeds, setDailyProteinNeeds] = useState<number | null>(
@@ -50,6 +49,11 @@ const FoodRecommendation = () => {
   );
   const [dailyCarbsNeeds, setDailyCarbsNeeds] = useState<number | null>(null);
   const [saturedFatLimit, setSaturedFatLimit] = useState<number | null>(null);
+  const [breakfastCalories, setBreakfastCalories] = useState<number | null>(
+    null
+  );
+  const [lunchCalories, setLunchCalories] = useState<number | null>(null);
+  const [dinnerCalories, setDinnerCalories] = useState<number | null>(null);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -113,6 +117,7 @@ const FoodRecommendation = () => {
 
     return Math.round(bmr * (activityFactors[activityLevel] || 1.2)); // Default to sedentary if no match
   };
+
   const calculateDailyNutrientNeeds = (
     calories: number,
     weight: number,
@@ -143,6 +148,7 @@ const FoodRecommendation = () => {
     setDailyCarbsNeeds(carbsNeeds);
     setSaturedFatLimit(saturedFatLimit);
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -167,28 +173,43 @@ const FoodRecommendation = () => {
     setIdealWeight(idealWeightRange);
     setCalorieNeeds(calorieNeedsValue);
 
-    calculateDailyNutrientNeeds(
-      calorieNeedsValue,
-      weightNum,
-      ageNum,
-      formData.gender
-    );
     // Evaluate weight status
     const [minIdealWeight, maxIdealWeight] = idealWeightRange
       .split(" - ")
       .map((w) => parseFloat(w));
     let statusMessage = "";
+    let adjustedCalories = calorieNeedsValue;
     if (weightNum < minIdealWeight) {
-      const surplusCalories = calorieNeedsValue + 500; // Surplus calories for weight gain
-      statusMessage = `Berat badan Anda kurang. Untuk mencapai berat ideal, tingkatkan asupan kalori harian Anda hingga ${surplusCalories} kcal dan fokus pada makanan bergizi tinggi.`;
+      adjustedCalories += 500; // Surplus calories for weight gain
+      statusMessage = `Berat badan Anda kurang. Untuk mencapai berat ideal, tingkatkan asupan kalori harian Anda hingga ${adjustedCalories} kcal dan fokus pada makanan bergizi tinggi.`;
     } else if (weightNum > maxIdealWeight) {
-      const deficitCalories = calorieNeedsValue - 500; // Deficit calories for weight loss
-      statusMessage = `Berat badan Anda berlebih. Untuk mencapai berat ideal, kurangi asupan kalori harian menjadi sekitar ${deficitCalories} kcal.`;
+      adjustedCalories -= 500; // Deficit calories for weight loss
+      statusMessage = `Berat badan Anda berlebih. Untuk mencapai berat ideal, kurangi asupan kalori harian menjadi sekitar ${adjustedCalories} kcal.`;
     } else {
       statusMessage = `Berat badan Anda sudah ideal. Pertahankan pola makan dan aktivitas fisik untuk menjaga kesehatan Anda.`;
     }
 
     setSuccess(statusMessage);
+
+    const calculateMealCalories = (totalCalories: number) => {
+      const breakfastCalories = Math.round(totalCalories * 0.25);
+      const lunchCalories = Math.round(totalCalories * 0.5);
+      const dinnerCalories = Math.round(totalCalories * 0.25);
+      return { breakfastCalories, lunchCalories, dinnerCalories };
+    };
+
+    const { breakfastCalories, lunchCalories, dinnerCalories } =
+      calculateMealCalories(adjustedCalories);
+    setBreakfastCalories(breakfastCalories);
+    setLunchCalories(lunchCalories);
+    setDinnerCalories(dinnerCalories);
+
+    calculateDailyNutrientNeeds(
+      adjustedCalories,
+      weightNum,
+      ageNum,
+      formData.gender
+    );
 
     try {
       const res = await fetch("/api/recommendations", {
@@ -223,7 +244,7 @@ const FoodRecommendation = () => {
               Berat Badan (kg)
             </label>
             <input
-              type="string"
+              type="number"
               id="weight"
               name="weight"
               value={formData.weight}
@@ -238,7 +259,7 @@ const FoodRecommendation = () => {
               Tinggi Badan (cm)
             </label>
             <input
-              type="string"
+              type="number"
               id="height"
               name="height"
               value={formData.height}
@@ -253,7 +274,7 @@ const FoodRecommendation = () => {
               Usia (tahun)
             </label>
             <input
-              type="string"
+              type="number"
               id="age"
               name="age"
               value={formData.age}
@@ -340,6 +361,16 @@ const FoodRecommendation = () => {
               </h3>
             </div>
             {/* {success && <p className="mt-2 text-green-500">{success}</p>} */}
+            <div className="mt-4">
+              <h3 className="text-xl font-semibold">
+                Pembagian Kalori Harian:
+              </h3>
+              <ul className="grid grid-cols-3 justify-between text-center items-center ">
+                <li>Sarapan: {breakfastCalories} kcal</li>
+                <li>Makan Siang: {lunchCalories} kcal</li>
+                <li>Makan Malam: {dinnerCalories} kcal</li>
+              </ul>
+            </div>
           </div>
         )}
 
@@ -360,7 +391,7 @@ const FoodRecommendation = () => {
                   <h4>Nutrisi</h4>
                   <ul>
                     <li>Protein: {food.protein} g</li>
-                    <p>Kalori: {food.calories} kcal</p>
+                    <li>Kalori: {food.calories} kcal</li>
                     <li>fat: {food.fat} g</li>
                     <li>Carbs: {food.carbs} g</li>
                     <li>Serving Size: {food.serving_size}</li>
