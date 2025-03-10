@@ -441,7 +441,7 @@ const FoodRecommendation = () => {
       : 0;
 
     return (
-      <div className="mt-2 border-2 border-[#00712D] bg-white/10 backdrop-blur-sm rounded-lg p-4">
+      <div className="mt-2 border-2 border-[#00712D] bg-white/80 backdrop-blur-sm rounded-lg p-4">
         <div className="flex justify-between items-center border-b border-[#00712D]/30 pb-2 mb-3">
           <h2 className="font-bold text-xl">{food.name}</h2>
           <button
@@ -630,36 +630,49 @@ const FoodRecommendation = () => {
               <h3 className="text-xl font-semibold">
                 Pembagian Kalori Harian:
               </h3>
-              <ul className="grid grid-cols-3 justify-between text-center items-center ">
-                <li>Sarapan: {breakfastCalories} kcal</li>
-                <li>Makan Siang: {lunchCalories} kcal</li>
-                <li>Makan Malam: {dinnerCalories} kcal</li>
+              <ul className="mt-5 grid lg:grid-cols-3 justify-between text-center items-center ">
+                <li className="bg-white/80 w-52 rounded-full py-1 translate-x-1/2">
+                  Sarapan: {breakfastCalories} kcal
+                </li>
+                <li className="bg-white/80 w-52 rounded-full py-1 translate-x-1/2">
+                  Makan Siang: {lunchCalories} kcal
+                </li>
+                <li className="bg-white/80 w-52 rounded-full py-1 translate-x-1/2">
+                  Makan Malam: {dinnerCalories} kcal
+                </li>
               </ul>
             </div>
-          </div>
-        )}
+            <div className="grid lg:grid-cols-3 gap-4 mt-4">
+              {/* Breakfast recommendation */}
+              {recommendedFoods.breakfast !== null && (
+                <div className="mt-4">
+                  <h3 className="lg:hidden text-xl font-semibold">
+                    Rekomendasi Sarapan:
+                  </h3>
+                  {renderFoodCard(recommendedFoods.breakfast, "breakfast")}
+                </div>
+              )}
 
-        {/* Breakfast recommendation */}
-        {recommendedFoods.breakfast !== null && (
-          <div className="mt-4">
-            <h3 className="text-xl font-semibold">Rekomendasi Sarapan:</h3>
-            {renderFoodCard(recommendedFoods.breakfast, "breakfast")}
-          </div>
-        )}
+              {/* Lunch recommendation */}
+              {recommendedFoods.lunch !== null && (
+                <div className="mt-4">
+                  <h3 className="lg:hidden text-xl font-semibold">
+                    Rekomendasi Makan Siang:
+                  </h3>
+                  {renderFoodCard(recommendedFoods.lunch, "lunch")}
+                </div>
+              )}
 
-        {/* Lunch recommendation */}
-        {recommendedFoods.lunch !== null && (
-          <div className="mt-4">
-            <h3 className="text-xl font-semibold">Rekomendasi Makan Siang:</h3>
-            {renderFoodCard(recommendedFoods.lunch, "lunch")}
-          </div>
-        )}
-
-        {/* Dinner recommendation */}
-        {recommendedFoods.dinner !== null && (
-          <div className="mt-4">
-            <h3 className="text-xl font-semibold">Rekomendasi Makan Malam:</h3>
-            {renderFoodCard(recommendedFoods.dinner, "dinner")}
+              {/* Dinner recommendation */}
+              {recommendedFoods.dinner !== null && (
+                <div className="mt-4">
+                  <h3 className="lg:hidden text-xl font-semibold">
+                    Rekomendasi Makan Malam:
+                  </h3>
+                  {renderFoodCard(recommendedFoods.dinner, "dinner")}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
