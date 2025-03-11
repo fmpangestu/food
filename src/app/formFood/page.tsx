@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { readCSV } from "../../lib/csvReader";
 import cosineSimilarity from "../../lib/cosineSimilarity";
 
@@ -33,11 +33,14 @@ const FoodRecommendation = () => {
     activityLevel: "sedentary",
   });
   const [foods, setFoods] = useState<Food[]>([]);
+
+  // Update state to store arrays of foods per meal
   const [recommendedFoods, setRecommendedFoods] = useState<{
-    breakfast: Food | null;
-    lunch: Food | null;
-    dinner: Food | null;
-  }>({ breakfast: null, lunch: null, dinner: null });
+    breakfast: Food[];
+    lunch: Food[];
+    dinner: Food[];
+  }>({ breakfast: [], lunch: [], dinner: [] });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -55,7 +58,25 @@ const FoodRecommendation = () => {
   );
   const [lunchCalories, setLunchCalories] = useState<number | null>(null);
   const [dinnerCalories, setDinnerCalories] = useState<number | null>(null);
-  const [excludedFoods, setExcludedFoods] = useState<{
+  const [menuChangeCount, setMenuChangeCount] = useState<{
+    breakfast: number;
+    lunch: number;
+    dinner: number;
+  }>({
+    breakfast: 0,
+    lunch: 0,
+    dinner: 0,
+  });
+
+  const allExcludedFoods = useRef<{
+    [key: string]: Set<string>;
+  }>({
+    breakfast: new Set(),
+    lunch: new Set(),
+    dinner: new Set(),
+  });
+  // Update to track excluded food combinations
+  const [excludedCombinations, setExcludedCombinations] = useState<{
     breakfast: Set<string>;
     lunch: Set<string>;
     dinner: Set<string>;
@@ -65,19 +86,57 @@ const FoodRecommendation = () => {
     dinner: new Set(),
   });
 
+  // useEffect(() => {
+  //   const fetchFoods = async () => {
+  //     const data = await readCSV("/foods.csv");
+  //     if (!data || data.length === 0) {
+  //       console.error("No foods loaded or empty data array");
+  //     } else {
+  //       console.log("Loaded foods sample:", data.slice(0, 3));
+  //     }
+  //     setFoods(data);
+  //   };
+  //   fetchFoods();
+  // }, []);
+
   useEffect(() => {
     const fetchFoods = async () => {
-      const data = await readCSV("/foods.csv");
-      if (!data || data.length === 0) {
-        console.error("No foods loaded or empty data array");
-      } else {
-        console.log("Loaded foods sample:", data.slice(0, 3));
+      try {
+        const rawData = await readCSV("/foods.csv");
+
+        // Type check and transform the data if needed
+        if (Array.isArray(rawData)) {
+          // Map the data to ensure correct property names
+          const typedData: Food[] = rawData.map((item) => ({
+            name: item.name,
+            calories: Number(item.calories),
+            protein: Number(item.protein),
+            fat: Number(item.fat),
+            carbs: Number(item.carbs),
+            sodium: Number(item.sodium),
+            porpotionSize: Number(
+              item.porpotionSize || item.porpotionSize || 100
+            ), // Handle both spellings
+            similarityScore: undefined,
+          }));
+
+          if (!typedData || typedData.length === 0) {
+            console.error("No foods loaded or empty data array");
+          } else {
+            console.log("Loaded foods sample:", typedData.slice(0, 3));
+          }
+
+          setFoods(typedData);
+        } else {
+          console.error("Invalid data format returned from readCSV");
+        }
+      } catch (error) {
+        console.error("Error loading food data:", error);
       }
-      setFoods(data);
     };
+
     fetchFoods();
   }, []);
-
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -171,69 +230,233 @@ const FoodRecommendation = () => {
   // Global set to track used food names across all meals
   const usedFoodNames = new Set<string>();
 
-  const getRecommendation = (
+  // New function to get multiple food recommendations for a meal
+  // const getMultipleRecommendations = (
+  //   targetCalories: number,
+  //   mealType: "breakfast" | "lunch" | "dinner",
+  //   excludedFoods: Set<string> = new Set(),
+  //   count: number = 3
+  // ): Food[] => {
+  //   // Set calorie constraints based on meal type for individual foods
+  //   const perFoodTarget = targetCalories / count;
+
+  //   let minCaloriesPerFood, maxCaloriesPerFood;
+  //   if (mealType === "breakfast") {
+  //     minCaloriesPerFood = perFoodTarget * 0.5; // More flexible for individual items
+  //     maxCaloriesPerFood = perFoodTarget * 1.5;
+  //   } else if (mealType === "dinner") {
+  //     minCaloriesPerFood = perFoodTarget * 0.6;
+  //     maxCaloriesPerFood = perFoodTarget * 1.4;
+  //   } else {
+  //     minCaloriesPerFood = perFoodTarget * 0.7;
+  //     maxCaloriesPerFood = perFoodTarget * 1.3;
+  //   }
+
+  //   console.log(
+  //     `${mealType} total target: ${targetCalories}, per item: ${perFoodTarget}`
+  //   );
+
+  //   // Filter foods by calorie range and exclude already used foods
+  //   let availableFoods = foods.filter(
+  //     (food) =>
+  //       food.calories >= minCaloriesPerFood &&
+  //       food.calories <= maxCaloriesPerFood &&
+  //       !usedFoodNames.has(food.name) &&
+  //       !excludedFoods.has(food.name)
+  //   );
+
+  //   // If not enough foods in range, expand range
+  //   if (availableFoods.length < count * 2) {
+  //     console.log(`Not enough foods in range for ${mealType}, expanding range`);
+  //     availableFoods = foods.filter(
+  //       (food) => !usedFoodNames.has(food.name) && !excludedFoods.has(food.name)
+  //     );
+  //   }
+
+  //   // If still not enough foods, allow previously excluded foods
+  //   if (availableFoods.length < count) {
+  //     console.log(`Not enough foods for ${mealType}, allowing excluded foods`);
+  //     availableFoods = foods.filter((food) => !usedFoodNames.has(food.name));
+  //   }
+
+  //   // Create target "profile" for similarity calculation
+  //   const targetProfile = {
+  //     calories: perFoodTarget, // Target per item
+  //     protein: dailyProteinNeeds
+  //       ? (dailyProteinNeeds * (mealType === "lunch" ? 0.5 : 0.25)) / count
+  //       : 0,
+  //     carbs: dailyCarbsNeeds
+  //       ? (dailyCarbsNeeds * (mealType === "lunch" ? 0.5 : 0.25)) / count
+  //       : 0,
+  //     fat: (targetCalories * 0.3) / 9 / count,
+  //   };
+
+  //   // Calculate similarity scores
+  //   const foodsWithScores = availableFoods.map((food) => {
+  //     const foodVector = [food.calories, food.protein, food.carbs, food.fat];
+  //     const targetVector = [
+  //       targetProfile.calories,
+  //       targetProfile.protein,
+  //       targetProfile.carbs,
+  //       targetProfile.fat,
+  //     ];
+
+  //     // Calculate similarity with specific focus on calories matching
+  //     let calorieMatch =
+  //       1 - Math.abs(food.calories - perFoodTarget) / perFoodTarget;
+
+  //     // Add penalty for exceeding target calories, especially for breakfast
+  //     if (food.calories > perFoodTarget) {
+  //       const overagePercent = (food.calories - perFoodTarget) / perFoodTarget;
+
+  //       // Breakfast should have heavier penalty for being over
+  //       if (mealType === "breakfast") {
+  //         calorieMatch -= overagePercent * 0.5; // Higher penalty for breakfast
+  //       } else {
+  //         calorieMatch -= overagePercent * 0.3; // Normal penalty for lunch/dinner
+  //       }
+  //     }
+
+  //     const similarityScore =
+  //       cosineSimilarity(foodVector, targetVector) * (0.7 + 0.3 * calorieMatch);
+
+  //     return { ...food, similarityScore };
+  //   });
+
+  //   // Sort by similarity score
+  //   const sortedFoods = foodsWithScores.sort(
+  //     (a, b) => (b.similarityScore || 0) - (a.similarityScore || 0)
+  //   );
+
+  //   // Get the top 'count' recommendations
+  //   // const selectedFoods: Food[] = [];
+  //   // for (let i = 0; i < sortedFoods.length && selectedFoods.length < count; i++) {
+  //   //   const food = sortedFoods[i];
+  //   //   // Only add if not already in the set
+  //   //   if (!usedFoodNames.has(food.name)) {
+  //   //     selectedFoods.push(food);
+  //   //     usedFoodNames.add(food.name);
+  //   //   }
+  //   // }
+
+  //   const selectedFoods: Food[] = [];
+  //   let attempts = 0;
+  //   const maxAttempts = 5; // Avoid infinite loops
+
+  //   while (selectedFoods.length < count && attempts < maxAttempts) {
+  //     attempts++;
+
+  //     // Clear previous selection attempt
+  //     selectedFoods.length = 0;
+  //     const tempUsedNames = new Set<string>();
+
+  //     for (
+  //       let i = 0;
+  //       i < sortedFoods.length && selectedFoods.length < count;
+  //       i++
+  //     ) {
+  //       const food = sortedFoods[i];
+  //       // Only add if not already in the temporary set
+  //       if (
+  //         !tempUsedNames.has(food.name) &&
+  //         !usedFoodNames.has(food.name) &&
+  //         !excludedFoods.has(food.name)
+  //       ) {
+  //         selectedFoods.push(food);
+  //         tempUsedNames.add(food.name);
+  //       }
+  //     }
+
+  //     // Check if this combination is in excluded combinations
+  //     if (selectedFoods.length === count) {
+  //       const foodSignature = selectedFoods
+  //         .map((food) => food.name)
+  //         .sort()
+  //         .join("|");
+  //       if (excludedCombinations[mealType].has(foodSignature)) {
+  //         console.log(`Skipping already seen combination for ${mealType}`);
+  //         // Try again with the top items excluded
+  //         selectedFoods.forEach((food) => excludedFoods.add(food.name));
+  //         continue;
+  //       }
+
+  //       // Valid new combination - add to used foods
+  //       selectedFoods.forEach((food) => usedFoodNames.add(food.name));
+  //       break;
+  //     }
+  //   }
+
+  //   return selectedFoods;
+  // };
+
+  const getMultipleRecommendations = (
     targetCalories: number,
     mealType: "breakfast" | "lunch" | "dinner",
-    excludedFoods: Set<string> = new Set()
-  ): Food | null => {
-    // Set calorie constraints based on meal type
-    let minCalories, maxCalories;
+    excludedFoods: Set<string> = new Set(),
+    count: number = 3,
+    maxAttempts: number = 20
+  ): Food[] => {
+    // Set calorie constraints based on meal type for individual foods
+    const perFoodTarget = targetCalories / count;
 
+    let minCaloriesPerFood, maxCaloriesPerFood;
     if (mealType === "breakfast") {
-      minCalories = targetCalories * 0.75;
-      maxCalories = targetCalories * 1.1;
+      minCaloriesPerFood = perFoodTarget * 0.5;
+      maxCaloriesPerFood = perFoodTarget * 1.5;
     } else if (mealType === "dinner") {
-      minCalories = targetCalories * 0.7;
-      maxCalories = targetCalories * 1.3;
+      minCaloriesPerFood = perFoodTarget * 0.6;
+      maxCaloriesPerFood = perFoodTarget * 1.4;
     } else {
-      minCalories = targetCalories * 0.8;
-      maxCalories = targetCalories * 1.2;
+      minCaloriesPerFood = perFoodTarget * 0.7;
+      maxCaloriesPerFood = perFoodTarget * 1.3;
     }
-
-    console.log(
-      `${mealType} target: ${targetCalories}, range: ${minCalories}-${maxCalories}`
-    );
 
     // Filter foods by calorie range and exclude already used foods
     let availableFoods = foods.filter(
       (food) =>
-        food.calories >= minCalories &&
-        food.calories <= maxCalories &&
+        food.calories >= minCaloriesPerFood &&
+        food.calories <= maxCaloriesPerFood &&
         !usedFoodNames.has(food.name) &&
         !excludedFoods.has(food.name)
     );
 
-    // If no foods in range, expand range
-    if (availableFoods.length === 0) {
-      console.log(`No foods in range for ${mealType}, expanding range`);
+    // If not enough foods in range, expand range
+    if (availableFoods.length < count * 2) {
+      console.log(`${mealType}: Not enough foods in range, expanding range`);
       availableFoods = foods.filter(
         (food) => !usedFoodNames.has(food.name) && !excludedFoods.has(food.name)
       );
     }
 
-    // If still no foods, allow previously excluded foods
-    if (availableFoods.length === 0) {
-      console.log(
-        `No available foods for ${mealType}, allowing excluded foods`
-      );
-      availableFoods = foods.filter((food) => !usedFoodNames.has(food.name));
-    }
+    // If still not enough foods, relax exclusion of foods from this meal type
+    if (availableFoods.length < count) {
+      console.log(`${mealType}: Not enough foods, relaxing some exclusions`);
 
-    // If still no foods, return null
-    if (availableFoods.length === 0) {
-      return null;
+      // Only consider foods used in other meal types as excluded
+      const otherMealTypes = ["breakfast", "lunch", "dinner"].filter(
+        (type) => type !== mealType
+      );
+
+      const otherMealFoods = new Set<string>();
+      otherMealTypes.forEach((type) => {
+        recommendedFoods[type as "breakfast" | "lunch" | "dinner"].forEach(
+          (food) => otherMealFoods.add(food.name)
+        );
+      });
+
+      availableFoods = foods.filter((food) => !otherMealFoods.has(food.name));
     }
 
     // Create target "profile" for similarity calculation
     const targetProfile = {
-      calories: targetCalories,
+      calories: perFoodTarget,
       protein: dailyProteinNeeds
-        ? dailyProteinNeeds * (mealType === "lunch" ? 0.5 : 0.25)
+        ? (dailyProteinNeeds * (mealType === "lunch" ? 0.5 : 0.25)) / count
         : 0,
       carbs: dailyCarbsNeeds
-        ? dailyCarbsNeeds * (mealType === "lunch" ? 0.5 : 0.25)
+        ? (dailyCarbsNeeds * (mealType === "lunch" ? 0.5 : 0.25)) / count
         : 0,
-      fat: (targetCalories * 0.3) / 9,
+      fat: (targetCalories * 0.3) / 9 / count,
     };
 
     // Calculate similarity scores
@@ -246,26 +469,20 @@ const FoodRecommendation = () => {
         targetProfile.fat,
       ];
 
-      // // Calculate similarity with specific focus on calories matching
-      // const calorieMatch =
-      //   1 - Math.abs(food.calories - targetCalories) / targetCalories;
-
       // Calculate similarity with specific focus on calories matching
       let calorieMatch =
-        1 - Math.abs(food.calories - targetCalories) / targetCalories;
+        1 - Math.abs(food.calories - perFoodTarget) / perFoodTarget;
 
       // Add penalty for exceeding target calories, especially for breakfast
-      if (food.calories > targetCalories) {
-        const overagePercent =
-          (food.calories - targetCalories) / targetCalories;
-
-        // Breakfast should have heavier penalty for being over
+      if (food.calories > perFoodTarget) {
+        const overagePercent = (food.calories - perFoodTarget) / perFoodTarget;
         if (mealType === "breakfast") {
-          calorieMatch -= overagePercent * 0.5; // Higher penalty for breakfast
+          calorieMatch -= overagePercent * 0.5;
         } else {
-          calorieMatch -= overagePercent * 0.3; // Normal penalty for lunch/dinner
+          calorieMatch -= overagePercent * 0.3;
         }
       }
+
       const similarityScore =
         cosineSimilarity(foodVector, targetVector) * (0.7 + 0.3 * calorieMatch);
 
@@ -277,15 +494,118 @@ const FoodRecommendation = () => {
       (a, b) => (b.similarityScore || 0) - (a.similarityScore || 0)
     );
 
-    // Pick the best match
-    const bestMatch = sortedFoods[0];
+    const selectedFoods: Food[] = [];
+    let attempts = 0;
 
-    // Mark this food as used
-    if (bestMatch) {
-      usedFoodNames.add(bestMatch.name);
+    while (selectedFoods.length < count && attempts < maxAttempts) {
+      attempts++;
+
+      // Clear previous selection attempt
+      selectedFoods.length = 0;
+      const tempUsedNames = new Set<string>();
+
+      // Try to find foods for this combination
+      for (
+        let i = 0;
+        i < sortedFoods.length && selectedFoods.length < count;
+        i++
+      ) {
+        const food = sortedFoods[i];
+        // Only add if not already in the temporary set
+        if (
+          !tempUsedNames.has(food.name) &&
+          !usedFoodNames.has(food.name) &&
+          !excludedFoods.has(food.name)
+        ) {
+          selectedFoods.push(food);
+          tempUsedNames.add(food.name);
+        }
+      }
+
+      // If we don't have enough foods but are on later attempts, relax constraints
+      if (selectedFoods.length < count && attempts > maxAttempts / 2) {
+        // Add any foods that fit calorie range and aren't used in THIS selection
+        for (let i = 0; i < foods.length && selectedFoods.length < count; i++) {
+          const food = foods[i];
+          if (
+            !tempUsedNames.has(food.name) &&
+            !usedFoodNames.has(food.name) &&
+            food.calories >= minCaloriesPerFood &&
+            food.calories <= maxCaloriesPerFood
+          ) {
+            selectedFoods.push(food);
+            tempUsedNames.add(food.name);
+          }
+        }
+
+        // If we still don't have enough, try again with more relaxed constraints
+        if (selectedFoods.length < count) {
+          continue;
+        }
+      }
+
+      // Check if this combination is in excluded combinations
+      if (selectedFoods.length === count) {
+        const foodSignature = selectedFoods
+          .map((food) => food.name)
+          .sort()
+          .join("|");
+
+        if (excludedCombinations[mealType].has(foodSignature)) {
+          // Try again with the top items excluded
+          selectedFoods.forEach((food) => excludedFoods.add(food.name));
+          continue;
+        }
+
+        // Valid new combination - add to used foods
+        selectedFoods.forEach((food) => usedFoodNames.add(food.name));
+
+        // Add to all excluded foods for this meal type
+        selectedFoods.forEach((food) => {
+          allExcludedFoods.current[mealType].add(food.name);
+        });
+
+        break;
+      }
     }
 
-    return bestMatch || null;
+    // If we couldn't find a valid combination after all attempts
+    if (selectedFoods.length < count) {
+      console.log(`${mealType}: Using fallback foods - all attempts exhausted`);
+
+      // Reset excluded foods for this meal type to avoid getting stuck
+      allExcludedFoods.current[mealType].clear();
+
+      // Fallback to any available foods that meet calorie requirements
+      const fallbackFoods = foods
+        .filter(
+          (food) =>
+            !usedFoodNames.has(food.name) &&
+            food.calories >= minCaloriesPerFood &&
+            food.calories <= maxCaloriesPerFood
+        )
+        .slice(0, count);
+
+      // If we still don't have enough, take any available foods
+      if (fallbackFoods.length < count) {
+        const anyFoods = foods
+          .filter((food) => !usedFoodNames.has(food.name))
+          .sort(
+            (a, b) =>
+              Math.abs(a.calories - perFoodTarget) -
+              Math.abs(b.calories - perFoodTarget)
+          )
+          .slice(0, count);
+
+        anyFoods.forEach((food) => usedFoodNames.add(food.name));
+        return anyFoods;
+      }
+
+      fallbackFoods.forEach((food) => usedFoodNames.add(food.name));
+      return fallbackFoods;
+    }
+
+    return selectedFoods;
   };
 
   const recommendFoods = (calorieNeeds: number) => {
@@ -302,17 +622,20 @@ const FoodRecommendation = () => {
     // Clear used foods when generating full recommendations
     usedFoodNames.clear();
 
-    // Reset excluded foods
-    setExcludedFoods({
+    // Reset excluded combinations
+    setExcludedCombinations({
       breakfast: new Set(),
       lunch: new Set(),
       dinner: new Set(),
     });
 
-    // Get recommendations for each meal
-    const breakfast = getRecommendation(breakfastCalories, "breakfast");
-    const lunch = getRecommendation(lunchCalories, "lunch");
-    const dinner = getRecommendation(dinnerCalories, "dinner");
+    // Get multiple recommendations for each meal
+    const breakfast = getMultipleRecommendations(
+      breakfastCalories,
+      "breakfast"
+    );
+    const lunch = getMultipleRecommendations(lunchCalories, "lunch");
+    const dinner = getMultipleRecommendations(dinnerCalories, "dinner");
 
     setRecommendedFoods({
       breakfast,
@@ -325,23 +648,148 @@ const FoodRecommendation = () => {
     setDinnerCalories(dinnerCalories);
   };
 
-  // Function to get a new recommendation for a specific meal
-  const getNewRecommendation = (mealType: "breakfast" | "lunch" | "dinner") => {
-    // Add current recommendation to excluded foods for this meal
-    const currentFood = recommendedFoods[mealType];
+  // Function to get new recommendations for an entire meal
+  // const getNewMealRecommendations = (
+  //   mealType: "breakfast" | "lunch" | "dinner"
+  // ) => {
+  //   // Add current recommendations to excluded foods for this meal
+  //   const currentFoods = recommendedFoods[mealType];
 
-    if (currentFood) {
-      setExcludedFoods((prev) => {
+  //   if (currentFoods && currentFoods.length > 0) {
+  //     // Create a signature for this combination of foods
+  //     const foodSignature = currentFoods
+  //       .map((food) => food.name)
+  //       .sort()
+  //       .join("|");
+
+  //     setExcludedCombinations((prev) => {
+  //       const newExcluded = new Set(prev[mealType]);
+  //       newExcluded.add(foodSignature);
+  //       return {
+  //         ...prev,
+  //         [mealType]: newExcluded,
+  //       };
+  //     });
+
+  //     // Remove these foods from used foods
+  //     currentFoods.forEach((food) => {
+  //       usedFoodNames.delete(food.name);
+  //     });
+  //   }
+
+  //   const excludedFoodsSet = new Set<string>();
+  //   // Get target calories for this meal
+  //   let targetCalories;
+  //   if (mealType === "breakfast") targetCalories = breakfastCalories || 0;
+  //   else if (mealType === "lunch") targetCalories = lunchCalories || 0;
+  //   else targetCalories = dinnerCalories || 0;
+
+  //   // Get new recommendations for this meal
+  //   // const excludedFoods = new Set<string>();
+  //   // currentFoods.forEach(food => excludedFoods.add(food.name));
+
+  //   const newRecommendations = getMultipleRecommendations(
+  //     targetCalories,
+  //     mealType,
+  //     excludedFoodsSet
+  //   );
+
+  //   // Update recommendations state for just this meal
+  //   setRecommendedFoods((prev) => ({
+  //     ...prev,
+  //     [mealType]: newRecommendations,
+  //   }));
+  // };
+
+  const getNewMealRecommendations = (
+    mealType: "breakfast" | "lunch" | "dinner"
+  ) => {
+    // Increment menu change count
+    setMenuChangeCount((prev) => ({
+      ...prev,
+      [mealType]: prev[mealType] + 1,
+    }));
+
+    console.log(
+      `Getting new ${mealType} menu (change #${menuChangeCount[mealType] + 1})`
+    );
+
+    // Add current recommendations to excluded foods for this meal
+    const currentFoods = recommendedFoods[mealType];
+
+    if (currentFoods && currentFoods.length > 0) {
+      // Create a signature for this combination of foods
+      const foodSignature = currentFoods
+        .map((food) => food.name)
+        .sort()
+        .join("|");
+
+      // Add to excluded combinations
+      setExcludedCombinations((prev) => {
         const newExcluded = new Set(prev[mealType]);
-        newExcluded.add(currentFood.name);
+        newExcluded.add(foodSignature);
 
-        // Remove this food from usedFoodNames so we don't track it anymore
-        usedFoodNames.delete(currentFood.name);
+        // Reset if we've excluded too many combinations to prevent getting stuck
+        // This allows continuous use without needing a reset button
+        if (newExcluded.size > 15) {
+          console.log(
+            `${mealType}: Too many exclusions, resetting except current combination`
+          );
+          return {
+            ...prev,
+            [mealType]: new Set([foodSignature]), // Keep only the current
+          };
+        }
 
         return {
           ...prev,
           [mealType]: newExcluded,
         };
+      });
+
+      // Remove these foods from used foods
+      currentFoods.forEach((food) => {
+        usedFoodNames.delete(food.name);
+      });
+    }
+
+    // Build a comprehensive set of foods to exclude
+    const excludedFoodsSet = new Set<string>();
+
+    // Add foods from other meals that should be excluded
+    for (const [type, foods] of Object.entries(recommendedFoods)) {
+      if (type !== mealType) {
+        // Don't exclude from the meal we're changing
+        foods.forEach((food) => excludedFoodsSet.add(food.name));
+      }
+    }
+
+    // If we've changed menu many times, start clearing old exclusions gradually
+    // This ensures we don't get stuck with too many excluded foods
+    const changeThreshold = 10;
+    if (menuChangeCount[mealType] > changeThreshold) {
+      // Start clearing past exclusions gradually
+      const clearFactor = Math.min(
+        0.9,
+        (menuChangeCount[mealType] - changeThreshold) * 0.1
+      );
+
+      // Only use a subset of excluded foods to avoid getting stuck
+      let excludedCounter = 0;
+      allExcludedFoods.current[mealType].forEach((food) => {
+        // Add only some of the excluded foods based on clearFactor
+        if (Math.random() > clearFactor) {
+          excludedFoodsSet.add(food);
+          excludedCounter++;
+        }
+      });
+      console.log(
+        `${mealType}: Using ${excludedCounter} of ${allExcludedFoods.current[mealType].size} excluded foods after ${menuChangeCount[mealType]} changes`
+      );
+    } else {
+      // Add all previously excluded foods for this meal if we haven't changed too many times
+      allExcludedFoods.current[mealType].forEach((food) => {
+        excludedFoodsSet.add(food);
       });
     }
 
@@ -351,20 +799,25 @@ const FoodRecommendation = () => {
     else if (mealType === "lunch") targetCalories = lunchCalories || 0;
     else targetCalories = dinnerCalories || 0;
 
-    // Generate new recommendation
-    const newRecommendation = getRecommendation(
+    // Dynamically adjust max attempts based on how many times we've changed the menu
+    // This gives better results for frequent menu changes
+    const dynamicMaxAttempts = Math.min(30, 20 + menuChangeCount[mealType]);
+
+    // Get new recommendations for this meal
+    const newRecommendations = getMultipleRecommendations(
       targetCalories,
       mealType,
-      excludedFoods[mealType]
+      excludedFoodsSet,
+      3,
+      dynamicMaxAttempts // Dynamically increased max attempts
     );
 
     // Update recommendations state for just this meal
     setRecommendedFoods((prev) => ({
       ...prev,
-      [mealType]: newRecommendation,
+      [mealType]: newRecommendations,
     }));
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -418,12 +871,12 @@ const FoodRecommendation = () => {
     setLoading(false);
   };
 
-  // Helper function to render a food recommendation card
-  const renderFoodCard = (
-    food: Food | null,
+  // Helper function to render a meal's food recommendations
+  const renderMealCard = (
+    foods: Food[],
     mealType: "breakfast" | "lunch" | "dinner"
   ) => {
-    if (!food) {
+    if (!foods || foods.length === 0) {
       return (
         <div className="mt-2 p-4 bg-yellow-100 text-amber-800 rounded-lg">
           <p>Tidak ada rekomendasi yang tersedia untuk saat ini.</p>
@@ -436,53 +889,71 @@ const FoodRecommendation = () => {
     else if (mealType === "lunch") targetCalories = lunchCalories;
     else targetCalories = dinnerCalories;
 
+    // Calculate total calories from all foods in this meal
+    const totalCalories = foods.reduce((sum, food) => sum + food.calories, 0);
     const caloriePercentage = targetCalories
-      ? Math.round((food.calories / targetCalories) * 100)
+      ? Math.round((totalCalories / targetCalories) * 100)
       : 0;
+
+    let mealTitle;
+    if (mealType === "breakfast") mealTitle = "Sarapan";
+    else if (mealType === "lunch") mealTitle = "Makan Siang";
+    else mealTitle = "Makan Malam";
 
     return (
       <div className="mt-2 border-2 border-[#00712D] bg-white/80 backdrop-blur-sm rounded-lg p-4">
         <div className="flex justify-between items-center border-b border-[#00712D]/30 pb-2 mb-3">
-          <h2 className="font-bold text-xl">{food.name}</h2>
+          <h2 className="font-bold text-xl">Menu {mealTitle}</h2>
           <button
-            onClick={() => getNewRecommendation(mealType)}
+            onClick={() => getNewMealRecommendations(mealType)}
             className="bg-[#D5ED9F] text-[#00712D] py-1 px-4 rounded-full font-medium hover:bg-[#c0e47a] transition-colors"
           >
             Ganti Menu
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
-            <span className="font-semibold">Kalori:</span> {food.calories} kcal
-          </div>
-          <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
-            <span className="font-semibold">Protein:</span> {food.protein} g
-          </div>
-          <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
-            <span className="font-semibold">Lemak:</span> {food.fat} g
-          </div>
-          <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
-            <span className="font-semibold">Karbohidrat:</span> {food.carbs} g
-          </div>
-          <div className=" bg-[#D5ED9F]/20 p-2 rounded-lg">
-            <span className="font-semibold">Sodium:</span> {food.sodium} mg
-          </div>
-          <div className=" bg-[#D5ED9F]/20 p-2 rounded-lg">
-            <span className="font-semibold">Porsi:{food.porpotionSize} g</span>
-          </div>
-        </div>
+        {/* Total calories progress */}
 
-        {targetCalories && (
-          <div className="mt-3 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+        {/* Individual food items */}
+        <div className="space-y-3">
+          {foods.map((food, index) => (
+            <div key={index} className="p-3 bg-[#D5ED9F]/10 rounded-lg">
+              <div className="font-bold mb-1">{food.name}</div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
+                  <span className="font-semibold">Kalori:</span> {food.calories}{" "}
+                  kcal
+                </div>
+                <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
+                  <span className="font-semibold">Protein:</span> {food.protein}{" "}
+                  g
+                </div>
+                <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
+                  <span className="font-semibold">Lemak:</span> {food.fat} g
+                </div>
+                <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
+                  <span className="font-semibold">Karbohidrat:</span>{" "}
+                  {food.carbs} g
+                </div>
+                <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
+                  <span className="font-semibold">Sodium:</span> {food.sodium}{" "}
+                  mg
+                </div>
+                <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
+                  <span className="font-semibold">Porsi:</span>{" "}
+                  {food.porpotionSize || 100}g
+                </div>
+              </div>
+            </div>
+          ))}
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-semibold">Total Kalori:</span>
               <span>
-                Target kalori: {targetCalories} kcal ({caloriePercentage}% dari
-                target)
+                {totalCalories} kcal ({caloriePercentage}% dari target)
               </span>
             </div>
-            <div className="mt-1 bg-gray-200 rounded-full h-2 dark:bg-gray-700">
+            <div className="bg-gray-200 rounded-full h-2">
               <div
                 className={`h-2 rounded-full ${
                   caloriePercentage <= 80
@@ -495,7 +966,7 @@ const FoodRecommendation = () => {
               ></div>
             </div>
           </div>
-        )}
+        </div>
       </div>
     );
   };
@@ -612,7 +1083,7 @@ const FoodRecommendation = () => {
               Berat Badan IdealMu: {idealWeight}
             </h2>
             {success && (
-              <p className=" w-full text-[#FF9100] bg-[#FFFBE6] px-2 py-1 rounded-lg">
+              <p className="w-full text-[#FF9100] bg-[#FFFBE6] px-2 py-1 rounded-lg">
                 Note: {success}
               </p>
             )}
@@ -644,34 +1115,28 @@ const FoodRecommendation = () => {
             </div>
             <div className="grid lg:grid-cols-3 gap-4 mt-4">
               {/* Breakfast recommendation */}
-              {recommendedFoods.breakfast !== null && (
-                <div className="mt-4">
-                  <h3 className="lg:hidden text-xl font-semibold">
-                    Rekomendasi Sarapan:
-                  </h3>
-                  {renderFoodCard(recommendedFoods.breakfast, "breakfast")}
-                </div>
-              )}
+              <div className="mt-4">
+                <h3 className="lg:hidden text-xl font-semibold">
+                  Rekomendasi Sarapan:
+                </h3>
+                {renderMealCard(recommendedFoods.breakfast, "breakfast")}
+              </div>
 
               {/* Lunch recommendation */}
-              {recommendedFoods.lunch !== null && (
-                <div className="mt-4">
-                  <h3 className="lg:hidden text-xl font-semibold">
-                    Rekomendasi Makan Siang:
-                  </h3>
-                  {renderFoodCard(recommendedFoods.lunch, "lunch")}
-                </div>
-              )}
+              <div className="mt-4">
+                <h3 className="lg:hidden text-xl font-semibold">
+                  Rekomendasi Makan Siang:
+                </h3>
+                {renderMealCard(recommendedFoods.lunch, "lunch")}
+              </div>
 
               {/* Dinner recommendation */}
-              {recommendedFoods.dinner !== null && (
-                <div className="mt-4">
-                  <h3 className="lg:hidden text-xl font-semibold">
-                    Rekomendasi Makan Malam:
-                  </h3>
-                  {renderFoodCard(recommendedFoods.dinner, "dinner")}
-                </div>
-              )}
+              <div className="mt-4">
+                <h3 className="lg:hidden text-xl font-semibold">
+                  Rekomendasi Makan Malam:
+                </h3>
+                {renderMealCard(recommendedFoods.dinner, "dinner")}
+              </div>
             </div>
           </div>
         )}
