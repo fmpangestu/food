@@ -1,0 +1,52 @@
+const recommendFoods = (calorieNeeds: number) => {
+  const calculateMealCalories = (totalCalories: number) => {
+    const breakfastCalories = Math.round(totalCalories * 0.25);
+    const lunchCalories = Math.round(totalCalories * 0.5);
+    const dinnerCalories = Math.round(totalCalories * 0.25);
+    return { breakfastCalories, lunchCalories, dinnerCalories };
+  };
+
+  const { breakfastCalories, lunchCalories, dinnerCalories } =
+    calculateMealCalories(calorieNeeds);
+
+  // Clear used foods when generating full recommendations
+  usedFoodNames.clear();
+
+  // Reset all tracking states for fresh recommendations
+  setMenuChangeCount({
+    breakfast: 0,
+    lunch: 0,
+    dinner: 0,
+  });
+  
+  allExcludedFoods.current = {
+    breakfast: new Set(),
+    lunch: new Set(),
+    dinner: new Set(),
+  };
+
+  // Reset excluded combinations
+  setExcludedCombinations({
+    breakfast: new Set(),
+    lunch: new Set(),
+    dinner: new Set(),
+  });
+
+  // Get multiple recommendations for each meal
+  const breakfast = getMultipleRecommendations(
+    breakfastCalories,
+    "breakfast"
+  );
+  const lunch = getMultipleRecommendations(lunchCalories, "lunch");
+  const dinner = getMultipleRecommendations(dinnerCalories, "dinner");
+
+  setRecommendedFoods({
+    breakfast,
+    lunch,
+    dinner,
+  });
+
+  setBreakfastCalories(breakfastCalories);
+  setLunchCalories(lunchCalories);
+  setDinnerCalories(dinnerCalories);
+};
