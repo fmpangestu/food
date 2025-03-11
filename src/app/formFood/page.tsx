@@ -3,6 +3,8 @@ import { useEffect, useState, useRef } from "react";
 import { readCSV } from "../../lib/csvReader";
 import cosineSimilarity from "../../lib/cosineSimilarity";
 
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 // Tipe untuk data form
 interface FormData {
   weight: string;
@@ -85,19 +87,6 @@ const FoodRecommendation = () => {
     lunch: new Set(),
     dinner: new Set(),
   });
-
-  // useEffect(() => {
-  //   const fetchFoods = async () => {
-  //     const data = await readCSV("/foods.csv");
-  //     if (!data || data.length === 0) {
-  //       console.error("No foods loaded or empty data array");
-  //     } else {
-  //       console.log("Loaded foods sample:", data.slice(0, 3));
-  //     }
-  //     setFoods(data);
-  //   };
-  //   fetchFoods();
-  // }, []);
 
   useEffect(() => {
     const fetchFoods = async () => {
@@ -871,6 +860,118 @@ const FoodRecommendation = () => {
     setLoading(false);
   };
 
+  //* print state
+  const printTemplateRef = useRef<HTMLDivElement>(null);
+  // useEffect(() => {
+  //   const fetchFoods = async () => {
+  //     const data = await readCSV("/foods.csv");
+  //     if (!data || data.length === 0) {
+  //       console.error("No foods loaded or empty data array");
+  //     } else {
+  //       console.log("Loaded foods sample:", data.slice(0, 3));
+  //     }
+  //     setFoods(data);
+  //   };
+  //   fetchFoods();
+  // }, []);
+  // Replace the html2pdf import with:
+
+  // Then update your handlePrintPDF function:
+  // Update the handlePrintPDF function
+
+  const handlePrintPDF = () => {
+    if (!printTemplateRef.current) return;
+
+    // Show loading indicator
+    const loadingIndicator = document.createElement("div");
+    loadingIndicator.className =
+      "fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black/30 z-50";
+    loadingIndicator.innerHTML =
+      '<div class="bg-white p-4 rounded-lg">Menyiapkan PDF...</div>';
+    document.body.appendChild(loadingIndicator);
+
+    // Make the template temporarily visible but offscreen for better rendering
+    const template = printTemplateRef.current;
+    const originalStyle = template.style.display;
+    template.style.display = "block";
+
+    // Add a small delay to ensure the element is ready for capture
+    setTimeout(() => {
+      html2canvas(template, {
+        // scale: 2,
+        useCORS: true,
+        logging: false,
+        allowTaint: true,
+        backgroundColor: "white",
+        onclone: (clonedDoc) => {
+          // Additional preparation for the cloned document if needed
+          const clonedTemplate = clonedDoc.querySelector("#print-template");
+          if (clonedTemplate) {
+            (clonedTemplate as HTMLElement).style.display = "block";
+            (clonedTemplate as HTMLElement).style.visibility = "visible";
+          }
+        },
+      })
+        .then((canvas) => {
+          // Reset the template style
+          template.style.cssText = originalStyle;
+
+          const imgData = canvas.toDataURL("image/jpeg", 0.95);
+          const pdf = new jsPDF({
+            orientation: "portrait",
+            unit: "mm",
+            format: "a4",
+          });
+
+          const pageWidth = pdf.internal.pageSize.getWidth();
+          const pageHeight = pdf.internal.pageSize.getHeight();
+          const marginLeft = 6;
+          const marginTop = 10;
+          const contentWidth = pageWidth - marginLeft * 2;
+
+          // Maintain aspect ratio
+          const imgWidth = contentWidth;
+          const imgHeight = (canvas.height * contentWidth) / canvas.width;
+
+          let heightLeft = imgHeight;
+          let position = marginTop;
+
+          pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+
+          while (heightLeft > 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+          }
+
+          pdf.save(
+            `rekomendasi_makanan_sehat_${new Date().toLocaleDateString()}.pdf`
+          );
+          document.body.removeChild(loadingIndicator);
+        })
+        .catch((error) => {
+          console.error("PDF generation error:", error);
+          template.style.cssText = originalStyle;
+          document.body.removeChild(loadingIndicator);
+          alert("Gagal membuat PDF. Silakan coba lagi.");
+        });
+    }, 200);
+  };
+
+  const renderFoodTableRow = (food: Food, index: number) => (
+    <tr key={`food-row-${food.name}-${index}`}>
+      <td className="border p-2">{food.name}</td>
+      <td className="border p-2">{food.calories} kcal</td>
+      <td className="border p-2">{food.protein}g</td>
+      <td className="border p-2">{food.carbs}g</td>
+      <td className="border p-2">{food.fat}g</td>
+      <td className="border p-2">{food.sodium}mg</td>
+      <td className="border p-2">{food.porpotionSize}g</td>
+    </tr>
+  );
+  //* batas print state
   // Helper function to render a meal's food recommendations
   const renderMealCard = (
     foods: Food[],
@@ -1078,10 +1179,32 @@ const FoodRecommendation = () => {
       </div>
       <div className="md:container mx-2 md:mx-auto mb-5 rounded-xl">
         {idealWeight && (
-          <div className="mt-4 bg-[#D5ED9F] text-[#00712D] rounded-lg p-4 ">
-            <h2 className="text-xl font-semibold">
-              Berat Badan IdealMu: {idealWeight}
-            </h2>
+          <div className=" mt-4 bg-[#D5ED9F] text-[#00712D] rounded-lg p-4 ">
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-sm lg:text-xl font-semibold">
+                Berat Badan IdealMu: {idealWeight}
+              </h2>
+              <button
+                onClick={handlePrintPDF}
+                className="bg-[#00712D] text-[10px] lg:text-lg text-white py-1.5 px-4 lg:px-6 rounded-lg font-medium hover:bg-[#005c24] transition-colors flex items-center"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-3.5 w-3.5 lg:h-5 lg:w-5 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                  />
+                </svg>
+                Unduh PDF
+              </button>
+            </div>
             {success && (
               <p className="w-full text-[#FF9100] bg-[#FFFBE6] px-2 py-1 rounded-lg">
                 Note: {success}
@@ -1136,6 +1259,167 @@ const FoodRecommendation = () => {
                   Rekomendasi Makan Malam:
                 </h3>
                 {renderMealCard(recommendedFoods.dinner, "dinner")}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* batas pdf       */}
+
+        {idealWeight && (
+          <div
+            id="print-template"
+            ref={printTemplateRef}
+            className="hidden bg-white"
+          >
+            <div className="bg-white container justify-center items-center p-8 max-w-[1100px] mx-auto ">
+              <h1 className="text-center text-xl font-bold mb-4">
+                REKOMENDASI MAKANAN SEHAT
+              </h1>
+              <p className="text-right text-sm mb-4">
+                Tanggal: {new Date().toLocaleDateString()}
+              </p>
+
+              <div className="mb-8">
+                <h2 className="text-lg font-bold mb-2">Informasi Kesehatan</h2>
+                <table className="w-full border-collapse border">
+                  <tbody>
+                    <tr>
+                      <td className="border p-2 font-semibold">
+                        Berat Badan Ideal:
+                      </td>
+                      <td className="border p-2">{idealWeight}</td>
+                    </tr>
+                    {success && (
+                      <tr>
+                        <td className="border p-2 font-semibold">Catatan:</td>
+                        <td className="border p-2">{success}</td>
+                      </tr>
+                    )}
+                    <tr>
+                      <td className="border p-2 font-semibold">
+                        Kalori Harian:
+                      </td>
+                      <td className="border p-2">{calorieNeeds} kcal</td>
+                    </tr>
+                    <tr>
+                      <td className="border p-2 font-semibold">
+                        Protein Harian:
+                      </td>
+                      <td className="border p-2">{dailyProteinNeeds}g</td>
+                    </tr>
+                    <tr>
+                      <td className="border p-2 font-semibold">
+                        Karbohidrat Harian:
+                      </td>
+                      <td className="border p-2">{dailyCarbsNeeds}g</td>
+                    </tr>
+                    <tr>
+                      <td className="border p-2 font-semibold">
+                        Batas Gula Harian:
+                      </td>
+                      <td className="border p-2">{dailySugarNeeds}g</td>
+                    </tr>
+                    <tr>
+                      <td className="border p-2 font-semibold">
+                        Batas Sodium Harian:
+                      </td>
+                      <td className="border p-2">{dailySodiumNeeds}g</td>
+                    </tr>
+                    <tr>
+                      <td className="border p-2 font-semibold">
+                        Batas Lemak Jenuh:
+                      </td>
+                      <td className="border p-2">{saturedFatLimit}g</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Breakfast table */}
+              <div className="mb-6">
+                <h3 className="text-lg font-bold mb-2">
+                  Rekomendasi Sarapan ({breakfastCalories} kcal)
+                </h3>
+                <table className="w-full border-collapse border text-sm">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="border p-2">Nama Makanan</th>
+                      <th className="border p-2">Kalori</th>
+                      <th className="border p-2">Protein</th>
+                      <th className="border p-2">Karbo</th>
+                      <th className="border p-2">Lemak</th>
+                      <th className="border p-2">Sodium</th>
+                      <th className="border p-2">Porsi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recommendedFoods.breakfast.map((food, index) =>
+                      renderFoodTableRow(food, index)
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Lunch table */}
+              <div className="mb-6">
+                <h3 className="text-lg font-bold mb-2">
+                  Rekomendasi Makan Siang ({lunchCalories} kcal)
+                </h3>
+                <table className="w-full border-collapse border text-sm">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="border p-2">Nama Makanan</th>
+                      <th className="border p-2">Kalori</th>
+                      <th className="border p-2">Protein</th>
+                      <th className="border p-2">Karbo</th>
+                      <th className="border p-2">Lemak</th>
+                      <th className="border p-2">Sodium</th>
+                      <th className="border p-2">Porsi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recommendedFoods.lunch.map((food, index) =>
+                      renderFoodTableRow(food, index)
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Dinner table */}
+              <div className="mb-6">
+                <h3 className="text-lg font-bold mb-2">
+                  Rekomendasi Makan Malam ({dinnerCalories} kcal)
+                </h3>
+                <table className="w-full border-collapse border text-sm">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="border p-2">Nama Makanan</th>
+                      <th className="border p-2">Kalori</th>
+                      <th className="border p-2">Protein</th>
+                      <th className="border p-2">Karbo</th>
+                      <th className="border p-2">Lemak</th>
+                      <th className="border p-2">Sodium</th>
+                      <th className="border p-2">Porsi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recommendedFoods.dinner.map((food, index) =>
+                      renderFoodTableRow(food, index)
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="text-center text-xs mt-8 pt-4 border-t">
+                <p>
+                  Rekomendasi ini dibuat berdasarkan perhitungan kebutuhan
+                  kalori dan nutrisi harian.
+                </p>
+                <p>
+                  Konsultasikan dengan ahli gizi profesional untuk rekomendasi
+                  yang lebih spesifik.
+                </p>
               </div>
             </div>
           </div>
