@@ -2,7 +2,7 @@
 import Papa from "papaparse";
 
 // Define the output type that your application expects
-interface Food {
+export interface Food {
   name: string;
   calories: number;
   protein: number;
