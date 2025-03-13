@@ -278,7 +278,12 @@ export default function EditFoodPage() {
     }
   };
 
-  if (loading) return <div className="p-8">Loading food data...</div>;
+  if (loading)
+    return (
+      <div className="p-8  text-[#00712D] items-center justify-center flex h-screen">
+        Loading food data...
+      </div>
+    );
   if (error && !submitting)
     return <div className="p-8 text-red-500">{error}</div>;
   if (!food) return <div className="p-8 text-red-500">Food not found</div>;

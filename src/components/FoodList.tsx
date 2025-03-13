@@ -81,7 +81,7 @@ export default function FoodList({ foods, setFoods }: FoodListProps) {
       <div className="mb-4">
         <input
           type="text"
-          placeholder="Search foods..."
+          placeholder="Cari makanan..."
           className="w-full p-2 border rounded-md"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}

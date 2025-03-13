@@ -197,14 +197,22 @@ export default function AdminPage() {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Food Management</h1>
-        <Link
-          href="/admin/add-food"
-          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-        >
-          Add New Food
-        </Link>
+      <div className="flex flex-col lg:flex-row justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold mb-4">Management data makanan</h1>
+        <div className="flex gap-3 items-center justify-center">
+          <Link
+            href="/admin/add-food"
+            className="bg-green-600 text-white text-[10px lg:text-sm px-2 lg:px-4 py-1 lg:py-2 rounded-md hover:bg-green-700"
+          >
+            Add data
+          </Link>
+          <Link
+            href="/formFood"
+            className="bg-green-600 text-white text-[10px lg:text-sm px-2 lg:px-4 py-1 lg:py-2 rounded-md hover:bg-green-700"
+          >
+            Form Perhitungan
+          </Link>
+        </div>
       </div>
 
       <FoodList foods={foods} setFoods={setFoods} handleDelete={handleDelete} />
