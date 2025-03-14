@@ -90,30 +90,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Failed to add food" }, { status: 500 });
   }
 }
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const id = decodeURIComponent(params.id);
+// export async function DELETE(
+//   request: NextRequest,
+//   { params }: { params: { id: string } }
+// ) {
+//   try {
+//     const id = decodeURIComponent(params.id);
 
-    console.log(`API: Mencoba menghapus makanan dengan id ${id}`);
-    const success = await deleteFoodFromServer(id);
+//     console.log(`API: Mencoba menghapus makanan dengan id ${id}`);
+//     const success = await deleteFoodFromServer(id);
 
-    if (success) {
-      return NextResponse.json({ success: true });
-    } else {
-      console.error(`Makanan dengan nama '${id}' tidak ditemukan`);
-      return NextResponse.json(
-        { error: "Makanan tidak ditemukan" },
-        { status: 404 }
-      );
-    }
-  } catch (error) {
-    console.error("API DELETE error:", error);
-    return NextResponse.json(
-      { error: `Gagal menghapus makanan: ${(error as Error).message}` },
-      { status: 500 }
-    );
-  }
-}
+//     if (success) {
+//       return NextResponse.json({ success: true });
+//     } else {
+//       console.error(`Makanan dengan nama '${id}' tidak ditemukan`);
+//       return NextResponse.json(
+//         { error: "Makanan tidak ditemukan" },
+//         { status: 404 }
+//       );
+//     }
+//   } catch (error) {
+//     console.error("API DELETE error:", error);
+//     return NextResponse.json(
+//       { error: `Gagal menghapus makanan: ${(error as Error).message}` },
+//       { status: 500 }
+//     );
+//   }
+// }
