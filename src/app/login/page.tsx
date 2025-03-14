@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -14,12 +14,11 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/admin";
   const [showPassword, setShowPassword] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-
-    console.log("Attempting login with:", email, "to", callbackUrl);
 
     try {
       const result = await signIn("credentials", {
@@ -28,19 +27,15 @@ export default function LoginPage() {
         password,
       });
 
-      console.log("Sign-in result:", result);
-
       if (result?.error) {
         setError(`Login failed: ${result.error}`);
       } else if (result?.ok) {
-        console.log("Login successful, redirecting to:", callbackUrl);
         router.push(callbackUrl);
         router.refresh();
       } else {
         setError("An unexpected error occurred");
       }
     } catch (err) {
-      console.error("Login error:", err);
       setError(
         `Error: ${err instanceof Error ? err.message : "Unknown error"}`
       );
@@ -49,7 +44,6 @@ export default function LoginPage() {
     }
   };
 
-  // Form JSX seperti sebelumnya
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow">
@@ -94,7 +88,7 @@ export default function LoginPage() {
               <input
                 id="password"
                 name="password"
-                type={showPassword ? "text" : "password"} // Toggle type berdasarkan state
+                type={showPassword ? "text" : "password"}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -104,7 +98,7 @@ export default function LoginPage() {
                 type="button"
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
                 onClick={() => setShowPassword(!showPassword)}
-                tabIndex={-1} // Agar tidak ditabindex
+                tabIndex={-1}
               >
                 {showPassword ? (
                   <EyeOff className="h-5 w-5" aria-hidden="true" />
@@ -125,13 +119,15 @@ export default function LoginPage() {
             </button>
           </div>
         </form>
-
-        <div className="text-center text-xs text-gray-500 mt-4">
-          <p>Untuk demo, gunakan:</p>
-          <p>Email: admin@gmail.com</p>
-          <p>Password: sukasehat</p>
-        </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<p>Loading...</p>}>
+      <LoginForm />
+    </Suspense>
   );
 }
