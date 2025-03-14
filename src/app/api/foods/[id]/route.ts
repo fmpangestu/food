@@ -1,23 +1,20 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextRequest, NextResponse } from "next/server";
-import { readCSV } from "@/lib/csvReader";
-import { updateFood } from "@/lib/csvWriter";
 import {
   deleteFoodFromServer,
   readCsvFromServer,
   updateFoodInServer,
 } from "@/lib/serverCsvHandler";
 
-type RouteParams = {
-  params: {
-    id: string;
-  };
-};
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest) {
   try {
-    const id = decodeURIComponent(params.id);
+    const id = request.nextUrl.pathname.split("/").pop(); // Ambil id dari URL
+    if (!id) {
+      return NextResponse.json({ error: "ID is required" }, { status: 400 });
+    }
+
     const foods = await readCsvFromServer();
-    const food = foods.find((food) => food.name === id);
+    const food = foods.find((food) => food.name === decodeURIComponent(id));
 
     if (!food) {
       return NextResponse.json({ error: "Food not found" }, { status: 404 });
@@ -32,12 +29,18 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(request: NextRequest) {
   try {
-    const id = decodeURIComponent(params.id);
-    const updatedFood = await request.json();
+    const id = request.nextUrl.pathname.split("/").pop(); // Ambil id dari URL
+    if (!id) {
+      return NextResponse.json({ error: "ID is required" }, { status: 400 });
+    }
 
-    const success = await updateFoodInServer(id, updatedFood);
+    const updatedFood = await request.json();
+    const success = await updateFoodInServer(
+      decodeURIComponent(id),
+      updatedFood
+    );
 
     if (success) {
       return NextResponse.json({ success: true, food: updatedFood });
@@ -52,40 +55,19 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-// export async function DELETE(
-//   request: NextRequest,
-//   { params }: RouteParams
-// ) {
-//   try {
-//     const id = params.id;
-//     const success = await deleteFood(id);
-
-//     if (success) {
-//       return NextResponse.json({ success: true });
-//     } else {
-//       return NextResponse.json({ error: "Food not found" }, { status: 404 });
-//     }
-//   } catch (error) {
-//     return NextResponse.json(
-//       { error: "Failed to delete food" },
-//       { status: 500 }
-//     );
-//   }
-// }
-
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest) {
   try {
-    const id = decodeURIComponent(params.id);
+    const id = request.nextUrl.pathname.split("/").pop(); // Ambil id dari URL
+    if (!id) {
+      return NextResponse.json({ error: "ID is required" }, { status: 400 });
+    }
 
     console.log(`API: Mencoba menghapus makanan dengan id "${id}"`);
-
-    // Tambahkan logging untuk membantu debugging
-    const success = await deleteFoodFromServer(id);
+    const success = await deleteFoodFromServer(decodeURIComponent(id));
 
     if (success) {
       return NextResponse.json({ success: true });
     } else {
-      // Pastikan response mengembalikan objek dengan properti error
       console.error(`Makanan dengan nama "${id}" tidak ditemukan`);
       return NextResponse.json(
         { error: `Makanan "${id}" tidak ditemukan` },
