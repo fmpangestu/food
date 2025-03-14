@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { readCSV } from "../../lib/csvReader";
 import cosineSimilarity from "../../lib/cosineSimilarity";
 
-import jsPDF from "jspdf";
+// import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 // Tipe untuk data form
 interface FormData {
@@ -671,7 +671,88 @@ const FoodRecommendation = () => {
   // Then update your handlePrintPDF function:
   // Update the handlePrintPDF function
 
-  const handlePrintPDF = () => {
+  // const handlePrintPDF = () => {
+  //   if (!printTemplateRef.current) return;
+
+  //   // Show loading indicator
+  //   const loadingIndicator = document.createElement("div");
+  //   loadingIndicator.className =
+  //     "fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black/30 z-50";
+  //   loadingIndicator.innerHTML =
+  //     '<div class="bg-white p-4 rounded-lg">Menyiapkan PDF...</div>';
+  //   document.body.appendChild(loadingIndicator);
+
+  //   // Make the template temporarily visible but offscreen for better rendering
+  //   const template = printTemplateRef.current;
+  //   const originalStyle = template.style.display;
+  //   template.style.display = "block";
+
+  //   // Add a small delay to ensure the element is ready for capture
+  //   setTimeout(() => {
+  //     html2canvas(template, {
+  //       // scale: 2,
+  //       useCORS: true,
+  //       logging: false,
+  //       allowTaint: true,
+  //       backgroundColor: "white",
+  //       onclone: (clonedDoc) => {
+  //         // Additional preparation for the cloned document if needed
+  //         const clonedTemplate = clonedDoc.querySelector("#print-template");
+  //         if (clonedTemplate) {
+  //           (clonedTemplate as HTMLElement).style.display = "block";
+  //           (clonedTemplate as HTMLElement).style.visibility = "visible";
+  //         }
+  //       },
+  //     })
+  //       .then((canvas) => {
+  //         // Reset the template style
+  //         template.style.cssText = originalStyle;
+
+  //         const imgData = canvas.toDataURL("image/jpeg", 0.95);
+  //         const pdf = new jsPDF({
+  //           orientation: "portrait",
+  //           unit: "mm",
+  //           format: "a4",
+  //         });
+
+  //         const pageWidth = pdf.internal.pageSize.getWidth();
+  //         const pageHeight = pdf.internal.pageSize.getHeight();
+  //         const marginLeft = 6;
+  //         const marginTop = 10;
+  //         const contentWidth = pageWidth - marginLeft * 2;
+
+  //         // Maintain aspect ratio
+  //         const imgWidth = contentWidth;
+  //         const imgHeight = (canvas.height * contentWidth) / canvas.width;
+
+  //         let heightLeft = imgHeight;
+  //         let position = marginTop;
+
+  //         pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
+  //         heightLeft -= pageHeight;
+
+  //         while (heightLeft > 0) {
+  //           position = heightLeft - imgHeight;
+  //           pdf.addPage();
+  //           pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
+  //           heightLeft -= pageHeight;
+  //         }
+
+  //         pdf.save(
+  //           `rekomendasi_makanan_sehat_${new Date().toLocaleDateString()}.pdf`
+  //         );
+  //         document.body.removeChild(loadingIndicator);
+  //       })
+  //       .catch((error) => {
+  //         console.error("PDF generation error:", error);
+  //         template.style.cssText = originalStyle;
+  //         document.body.removeChild(loadingIndicator);
+  //         alert("Gagal membuat PDF. Silakan coba lagi.");
+  //       });
+  //   }, 200);
+  // };
+
+  const handlePrintPDF = async () => {
     if (!printTemplateRef.current) return;
 
     // Show loading indicator
@@ -682,76 +763,84 @@ const FoodRecommendation = () => {
       '<div class="bg-white p-4 rounded-lg">Menyiapkan PDF...</div>';
     document.body.appendChild(loadingIndicator);
 
-    // Make the template temporarily visible but offscreen for better rendering
-    const template = printTemplateRef.current;
-    const originalStyle = template.style.display;
-    template.style.display = "block";
+    try {
+      // Import jsPDF secara dinamis
+      const jsPDFModule = await import("jspdf");
+      const jsPDF = jsPDFModule.default;
 
-    // Add a small delay to ensure the element is ready for capture
-    setTimeout(() => {
-      html2canvas(template, {
-        // scale: 2,
-        useCORS: true,
-        logging: false,
-        allowTaint: true,
-        backgroundColor: "white",
-        onclone: (clonedDoc) => {
-          // Additional preparation for the cloned document if needed
-          const clonedTemplate = clonedDoc.querySelector("#print-template");
-          if (clonedTemplate) {
-            (clonedTemplate as HTMLElement).style.display = "block";
-            (clonedTemplate as HTMLElement).style.visibility = "visible";
-          }
-        },
-      })
-        .then((canvas) => {
-          // Reset the template style
-          template.style.cssText = originalStyle;
+      // Make the template temporarily visible but offscreen for better rendering
+      const template = printTemplateRef.current;
+      const originalStyle = template.style.display;
+      template.style.display = "block";
 
-          const imgData = canvas.toDataURL("image/jpeg", 0.95);
-          const pdf = new jsPDF({
-            orientation: "portrait",
-            unit: "mm",
-            format: "a4",
-          });
+      // Add a small delay to ensure the element is ready for capture
+      setTimeout(() => {
+        html2canvas(template, {
+          useCORS: true,
+          logging: false,
+          allowTaint: true,
+          backgroundColor: "white",
+          onclone: (clonedDoc) => {
+            // Additional preparation for the cloned document if needed
+            const clonedTemplate = clonedDoc.querySelector("#print-template");
+            if (clonedTemplate) {
+              (clonedTemplate as HTMLElement).style.display = "block";
+              (clonedTemplate as HTMLElement).style.visibility = "visible";
+            }
+          },
+        })
+          .then((canvas) => {
+            // Reset the template style
+            template.style.cssText = originalStyle;
 
-          const pageWidth = pdf.internal.pageSize.getWidth();
-          const pageHeight = pdf.internal.pageSize.getHeight();
-          const marginLeft = 6;
-          const marginTop = 10;
-          const contentWidth = pageWidth - marginLeft * 2;
+            const imgData = canvas.toDataURL("image/jpeg", 0.95);
+            const pdf = new jsPDF({
+              orientation: "portrait",
+              unit: "mm",
+              format: "a4",
+            });
 
-          // Maintain aspect ratio
-          const imgWidth = contentWidth;
-          const imgHeight = (canvas.height * contentWidth) / canvas.width;
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const marginLeft = 6;
+            const marginTop = 10;
+            const contentWidth = pageWidth - marginLeft * 2;
 
-          let heightLeft = imgHeight;
-          let position = marginTop;
+            // Maintain aspect ratio
+            const imgWidth = contentWidth;
+            const imgHeight = (canvas.height * contentWidth) / canvas.width;
 
-          pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
-          heightLeft -= pageHeight;
+            let heightLeft = imgHeight;
+            let position = marginTop;
 
-          while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
             pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
             heightLeft -= pageHeight;
-          }
 
-          pdf.save(
-            `rekomendasi_makanan_sehat_${new Date().toLocaleDateString()}.pdf`
-          );
-          document.body.removeChild(loadingIndicator);
-        })
-        .catch((error) => {
-          console.error("PDF generation error:", error);
-          template.style.cssText = originalStyle;
-          document.body.removeChild(loadingIndicator);
-          alert("Gagal membuat PDF. Silakan coba lagi.");
-        });
-    }, 200);
+            while (heightLeft > 0) {
+              position = heightLeft - imgHeight;
+              pdf.addPage();
+              pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
+              heightLeft -= pageHeight;
+            }
+
+            pdf.save(
+              `rekomendasi_makanan_sehat_${new Date().toLocaleDateString()}.pdf`
+            );
+            document.body.removeChild(loadingIndicator);
+          })
+          .catch((error) => {
+            console.error("PDF generation error:", error);
+            template.style.cssText = originalStyle;
+            document.body.removeChild(loadingIndicator);
+            alert("Gagal membuat PDF. Silakan coba lagi.");
+          });
+      }, 200);
+    } catch (error) {
+      console.error("Error importing jsPDF:", error);
+      document.body.removeChild(loadingIndicator);
+      alert("Gagal memuat modul PDF. Silakan coba lagi.");
+    }
   };
-
   const renderFoodTableRow = (food: Food, index: number) => (
     <tr key={`food-row-${food.name}-${index}`}>
       <td className="border p-2">{food.name}</td>
