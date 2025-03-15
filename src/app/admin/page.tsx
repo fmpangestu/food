@@ -155,7 +155,18 @@ export default function AdminPage() {
         if (!response.ok) throw new Error("Failed to fetch foods");
 
         const data = await response.json();
-        setFoods(data);
+
+        const validatedData = Array.isArray(data)
+          ? data.filter(
+              (food) =>
+                food &&
+                typeof food === "object" &&
+                typeof food.name === "string"
+            )
+          : [];
+
+        setFoods(validatedData);
+        // serFoods(data)
       } catch (err) {
         setError("Error loading foods");
         console.error(err);
@@ -215,7 +226,11 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <FoodList foods={foods} setFoods={setFoods} handleDelete={handleDelete} />
+      <FoodList
+        foods={foods || []}
+        setFoods={setFoods}
+        handleDelete={handleDelete}
+      />
     </div>
   );
 }
