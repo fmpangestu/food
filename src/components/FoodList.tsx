@@ -29,9 +29,15 @@ export default function FoodList({ foods, setFoods }: FoodListProps) {
   const [foodToDelete, setFoodToDelete] = useState<string | null>(null);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const filteredFoods = foods.filter((food) =>
-    food.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // const filteredFoods = foods.filter((food) =>
+  //   food.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // );
+
+  const filteredFoods = !foods
+    ? []
+    : foods.filter((food) =>
+        food?.name?.toLowerCase?.().includes(searchTerm?.toLowerCase?.() || "")
+      );
 
   const openDeleteConfirmation = (foodName: string) => {
     setFoodToDelete(foodName);
@@ -105,27 +111,30 @@ export default function FoodList({ foods, setFoods }: FoodListProps) {
           <tbody>
             {filteredFoods.length > 0 ? (
               filteredFoods.map((food, index) => (
-                <tr key={`${food.name}-${index}`}>
-                  <td className="border p-2">{food.name}</td>
-                  <td className="border p-2">{food.calories}</td>
-                  <td className="border p-2">{food.protein}</td>
-                  <td className="border p-2">{food.fat}</td>
-                  <td className="border p-2">{food.carbs}</td>
-                  <td className="border p-2">{food.sodium}</td>
-                  <td className="border p-2">{food.porpotionSize}</td>
+                <tr key={`${food?.name || `food-${index}`}-${index}`}>
+                  <td className="border p-2">{food?.name || "Unnamed"}</td>
+                  <td className="border p-2">{food?.calories ?? 0}</td>
+                  <td className="border p-2">{food?.protein ?? 0}</td>
+                  <td className="border p-2">{food?.fat ?? 0}</td>
+                  <td className="border p-2">{food?.carbs ?? 0}</td>
+                  <td className="border p-2">{food?.sodium ?? 0}</td>
+                  <td className="border p-2">{food?.porpotionSize ?? 0}</td>
                   <td className="border p-2">
                     <div className="flex space-x-2">
                       <Link
                         href={`/admin/edit-food/${encodeURIComponent(
-                          food.name
+                          food?.name || ""
                         )}`}
                         className="bg-blue-500 text-white w-1/2 px-1 flex justify-center items-center text-center py-1 rounded-md hover:bg-blue-600 text-sm"
                       >
                         Edit
                       </Link>
                       <Button
-                        onClick={() => openDeleteConfirmation(food.name)}
-                        className="bg-red-500 text-white w-1/2 px-1  text-center py-1 rounded-md hover:bg-red-600 text-sm"
+                        onClick={() =>
+                          food?.name && openDeleteConfirmation(food.name)
+                        }
+                        className="bg-red-500 text-white w-1/2 px-1 text-center py-1 rounded-md hover:bg-red-600 text-sm"
+                        disabled={!food?.name}
                       >
                         Delete
                       </Button>
