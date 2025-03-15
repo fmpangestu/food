@@ -2,8 +2,8 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // lib/kvHandler.ts
 import { kv } from "@vercel/kv";
-import fs from "fs";
-import path from "path";
+// import fs from "fs";
+// import path from "path";
 // @ts-ignore
 import Papa from "papaparse";
 
@@ -22,36 +22,59 @@ interface Food {
 // Fungsi untuk initial import dari CSV saat pertama kali
 async function importInitialData(): Promise<Food[]> {
   try {
-    // Baca file CSV dari project root (bisa disesuaikan)
-    const csvPath = path.join(process.cwd(), "public", "foods.csv");
-    const csvData = fs.readFileSync(csvPath, "utf8");
+    console.log("Mengimpor data dari CSV...");
+    // Gunakan fetch untuk mengambil CSV dari /public
+    const response = await fetch(
+      new URL(
+        "/public/foods.csv",
+        process.env.VERCEL_URL || "http://localhost:3000"
+      )
+    );
+    if (!response.ok)
+      throw new Error(`Failed to fetch CSV: ${response.status}`);
 
-    // Parse CSV ke array objek
+    const csvData = await response.text();
+    console.log(`CSV data loaded, length: ${csvData.length} bytes`);
+
     const parsedData = Papa.parse(csvData, {
       header: true,
       skipEmptyLines: true,
-      dynamicTyping: true, // Convert numbers automatically
+      dynamicTyping: true,
     });
 
+    console.log(`Parsed data: ${parsedData.data.length} items`);
     return parsedData.data as Food[];
   } catch (error) {
-    console.error("Error importing initial data:", error);
+    console.error("Error importing data:", error);
     return [];
   }
 }
 
 export async function readFoods(): Promise<Food[]> {
-  // Cek apakah data sudah di KV
-  const foods = await kv.get<Food[]>("foods");
+  try {
+    console.log("Mencoba membaca data dari KV...");
+    const foods = await kv.get<Food[]>("foods");
 
-  if (!foods) {
-    // Initial import from CSV jika belum ada di KV
-    const initialData = await importInitialData();
-    await kv.set("foods", initialData);
-    return initialData;
+    console.log(
+      "Status data dari KV:",
+      foods ? `Ditemukan ${foods.length} item` : "Data kosong"
+    );
+
+    if (!foods) {
+      console.log("Mengimpor data awal dari CSV...");
+      const initialData = await importInitialData();
+      console.log(`Data dari CSV: ${initialData.length} item`);
+
+      console.log("Menyimpan data ke KV...");
+      await kv.set("foods", initialData);
+      return initialData;
+    }
+
+    return foods;
+  } catch (error) {
+    console.error("ERROR MEMBACA DATA:", error);
+    return [];
   }
-
-  return foods;
 }
 
 export async function addFood(newFood: Food): Promise<boolean> {
