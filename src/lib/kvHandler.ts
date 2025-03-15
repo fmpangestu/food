@@ -25,10 +25,7 @@ async function importInitialData(): Promise<Food[]> {
     console.log("Mengimpor data dari CSV...");
     // Gunakan fetch untuk mengambil CSV dari /public
     const response = await fetch(
-      new URL(
-        "/public/foods.csv",
-        process.env.VERCEL_URL || "http://localhost:3000"
-      )
+      new URL("/foods.csv", process.env.VERCEL_URL || "http://localhost:3000")
     );
     if (!response.ok)
       throw new Error(`Failed to fetch CSV: ${response.status}`);
