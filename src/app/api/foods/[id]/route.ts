@@ -5,7 +5,7 @@ import {
   readCsvFromServer,
   updateFoodInServer,
 } from "@/lib/serverCsvHandler";
-
+import { getFoodByName, updateFood, deleteFood } from "@/lib/kvHandler";
 export async function GET(request: NextRequest) {
   try {
     const id = request.nextUrl.pathname.split("/").pop(); // Ambil id dari URL
@@ -37,10 +37,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const updatedFood = await request.json();
-    const success = await updateFoodInServer(
-      decodeURIComponent(id),
-      updatedFood
-    );
+    const success = await updateFood(decodeURIComponent(id), updatedFood);
 
     if (success) {
       return NextResponse.json({ success: true, food: updatedFood });
@@ -63,7 +60,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     console.log(`API: Mencoba menghapus makanan dengan id "${id}"`);
-    const success = await deleteFoodFromServer(decodeURIComponent(id));
+    const success = await deleteFood(decodeURIComponent(id));
 
     if (success) {
       return NextResponse.json({ success: true });
