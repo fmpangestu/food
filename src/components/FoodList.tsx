@@ -2,7 +2,7 @@
 /* eslint-disable react/no-unescaped-entities */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Food } from "../types/food";
 import { Button } from "./ui/button";
@@ -33,22 +33,11 @@ export default function FoodList({ foods, setFoods }: FoodListProps) {
   //   food.name.toLowerCase().includes(searchTerm.toLowerCase())
   // );
 
-  const [isClient, setIsClient] = useState(false);
-
-  // Prevent hydration errors
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  // Defer filter operation until client-side
-  const filteredFoods = !isClient
+  const filteredFoods = !foods
     ? []
-    : (Array.isArray(foods) ? foods : []).filter((food) => {
-        if (!food || typeof food !== "object") return false;
-        const name = food.name || "";
-        const term = searchTerm || "";
-        return name.toLowerCase().includes(term.toLowerCase());
-      });
+    : foods.filter((food) =>
+        food?.name?.toLowerCase?.().includes(searchTerm?.toLowerCase?.() || "")
+      );
 
   const openDeleteConfirmation = (foodName: string) => {
     setFoodToDelete(foodName);
@@ -156,7 +145,7 @@ export default function FoodList({ foods, setFoods }: FoodListProps) {
             ) : (
               <tr>
                 <td colSpan={8} className="border p-4 text-center">
-                  {searchTerm && isClient
+                  {searchTerm
                     ? "No foods match your search"
                     : "No foods available"}
                 </td>
