@@ -7,7 +7,7 @@ import {
   addFoodToServer,
   deleteFoodFromServer,
 } from "@/lib/serverCsvHandler";
-
+import { readFoods, addFood } from "@/lib/kvHandler";
 // export async function GET() {
 //   try {
 //     const foods = await readCSV("/foods.csv");
@@ -50,7 +50,7 @@ import {
 export async function GET() {
   try {
     console.log("API: Reading foods from server CSV");
-    const foods = await readCsvFromServer();
+    const foods = await readFoods();
     console.log(`API: Found ${foods.length} foods`);
     return NextResponse.json(foods);
   } catch (error) {
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("API: Adding new food:", newFood.name);
-    const success = await addFoodToServer(newFood);
+    const success = await addFood(newFood);
 
     if (success) {
       return NextResponse.json({ success: true, food: newFood });
