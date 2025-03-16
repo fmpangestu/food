@@ -57,8 +57,9 @@ export async function readFoods(): Promise<Food[]> {
       foods ? `Ditemukan ${foods.length} item` : "Data kosong"
     );
 
-    if (!foods) {
-      console.log("Mengimpor data awal dari CSV...");
+    // Perbaikan: Periksa apakah foods adalah array dan tidak kosong
+    if (!foods || !Array.isArray(foods)) {
+      console.log("Mengimpor data awal dari CSV karena data tidak valid...");
       const initialData = await importInitialData();
       console.log(`Data dari CSV: ${initialData.length} item`);
 
