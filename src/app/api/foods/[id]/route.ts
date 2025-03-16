@@ -6,6 +6,29 @@ import {
   updateFoodInServer,
 } from "@/lib/serverCsvHandler";
 import { getFoodByName, updateFood, deleteFood } from "@/lib/kvHandler";
+// export async function GET(request: NextRequest) {
+//   try {
+//     const id = request.nextUrl.pathname.split("/").pop(); // Ambil id dari URL
+//     if (!id) {
+//       return NextResponse.json({ error: "ID is required" }, { status: 400 });
+//     }
+
+//     const foods = await readCsvFromServer();
+//     const food = foods.find((food) => food.name === decodeURIComponent(id));
+
+//     if (!food) {
+//       return NextResponse.json({ error: "Food not found" }, { status: 404 });
+//     }
+
+//     return NextResponse.json(food);
+//   } catch (error) {
+//     return NextResponse.json(
+//       { error: "Failed to fetch food" },
+//       { status: 500 }
+//     );
+//   }
+// }
+
 export async function GET(request: NextRequest) {
   try {
     const id = request.nextUrl.pathname.split("/").pop(); // Ambil id dari URL
@@ -13,8 +36,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
-    const foods = await readCsvFromServer();
-    const food = foods.find((food) => food.name === decodeURIComponent(id));
+    // PERBAIKAN: Gunakan getFoodByName dari KV, bukan readCsvFromServer
+    const decodedId = decodeURIComponent(id);
+    const food = await getFoodByName(decodedId);
 
     if (!food) {
       return NextResponse.json({ error: "Food not found" }, { status: 404 });
@@ -22,13 +46,13 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(food);
   } catch (error) {
+    console.error("GET food error:", error);
     return NextResponse.json(
       { error: "Failed to fetch food" },
       { status: 500 }
     );
   }
 }
-
 export async function PUT(request: NextRequest) {
   try {
     const id = request.nextUrl.pathname.split("/").pop(); // Ambil id dari URL
@@ -37,10 +61,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const updatedFood = await request.json();
-    const success = await updateFoodInServer(
-      decodeURIComponent(id),
-      updatedFood
-    );
+    const success = await updateFood(decodeURIComponent(id), updatedFood);
 
     if (success) {
       return NextResponse.json({ success: true, food: updatedFood });
@@ -63,7 +84,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     console.log(`API: Mencoba menghapus makanan dengan id "${id}"`);
-    const success = await deleteFoodFromServer(decodeURIComponent(id));
+    const success = await deleteFood(decodeURIComponent(id));
 
     if (success) {
       return NextResponse.json({ success: true });

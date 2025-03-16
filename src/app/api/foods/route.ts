@@ -7,7 +7,7 @@ import {
   addFoodToServer,
   deleteFoodFromServer,
 } from "@/lib/serverCsvHandler";
-// import { readFoods, addFood } from "@/lib/kvHandler";
+import { readFoods, addFood } from "@/lib/kvHandler";
 // export async function GET() {
 //   try {
 //     const foods = await readCSV("/foods.csv");
@@ -47,18 +47,43 @@ import {
 //   }
 // }
 
+// export async function GET() {
+//   try {
+//     console.log("API: Reading foods from server CSV");
+//     const foods = await readFoods();
+//     console.log(`API: Found ${foods.length} foods`);
+//     return NextResponse.json(foods);
+//   } catch (error) {
+//     console.error("API GET error:", error);
+//     return NextResponse.json(
+//       { error: "Failed to fetch foods" },
+//       { status: 500 }
+//     );
+//   }
+// }
+
 export async function GET() {
   try {
-    console.log("API: Reading foods from server CSV");
-    const foods = await readCsvFromServer();
-    console.log(`API: Found ${foods.length} foods`);
-    return NextResponse.json(foods);
+    console.log("API: Mengambil data makanan dari KV database");
+
+    // Panggil readFoods() dengan error handling lebih detail
+    let foods;
+    try {
+      foods = await readFoods();
+      console.log("Data type dari readFoods():", typeof foods);
+      console.log("Apakah array:", Array.isArray(foods));
+    } catch (readError) {
+      console.error("Error dalam readFoods():", readError);
+      throw new Error(`readFoods() failed: ${readError}`);
+    }
+
+    // Validasi data sebelum mengembalikan response
+    const validFoods = Array.isArray(foods) ? foods : [];
+
+    console.log(`API: Ditemukan ${validFoods.length} makanan`);
+    return NextResponse.json(validFoods);
   } catch (error) {
-    console.error("API GET error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch foods" },
-      { status: 500 }
-    );
+    // Error handling...
   }
 }
 
@@ -75,7 +100,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("API: Adding new food:", newFood.name);
-    const success = await addFoodToServer(newFood);
+    const success = await addFood(newFood);
 
     if (success) {
       return NextResponse.json({ success: true, food: newFood });
