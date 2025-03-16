@@ -320,49 +320,49 @@ export default function FoodForm({
         case "calories":
           setFormData({
             ...formData,
-            calories: numValue,
-            Energy: numValue,
-            "Energy (kcal)": numValue,
+            calories: typeof numValue === "number" ? numValue : 0,
+            Energy: typeof numValue === "number" ? numValue : 0,
+            "Energy (kcal)": typeof numValue === "number" ? numValue : 0,
           });
           break;
         case "protein":
           setFormData({
             ...formData,
-            protein: numValue,
-            Protein: numValue,
-            "Protein (g)": numValue,
+            protein: typeof numValue === "number" ? numValue : 0,
+            Protein: typeof numValue === "number" ? numValue : 0,
+            "Protein (g)": typeof numValue === "number" ? numValue : 0,
           });
           break;
         case "fat":
           setFormData({
             ...formData,
-            fat: numValue,
-            Fat: numValue,
-            "Fat (g)": numValue,
+            fat: typeof numValue === "number" ? numValue : 0,
+            Fat: typeof numValue === "number" ? numValue : 0,
+            "Fat (g)": typeof numValue === "number" ? numValue : 0,
           });
           break;
         case "carbs":
           setFormData({
             ...formData,
-            carbs: numValue,
-            Carbohydrates: numValue,
-            "Carbohydrates (g)": numValue,
+            carbs: typeof numValue === "number" ? numValue : 0,
+            Carbohydrates: typeof numValue === "number" ? numValue : 0,
+            "Carbohydrates (g)": typeof numValue === "number" ? numValue : 0,
           });
           break;
         case "sodium":
           setFormData({
             ...formData,
-            sodium: numValue,
-            Sodium: numValue,
-            "Sodium (mg)": numValue,
+            sodium: typeof numValue === "number" ? numValue : 0,
+            Sodium: typeof numValue === "number" ? numValue : 0,
+            "Sodium (mg)": typeof numValue === "number" ? numValue : 0,
           });
           break;
         case "porpotionSize":
           setFormData({
             ...formData,
-            porpotionSize: numValue,
-            Porpotion_Size: numValue,
-            "Portion Size (g)": numValue,
+            porpotionSize: typeof numValue === "number" ? numValue : 0,
+            Porpotion_Size: typeof numValue === "number" ? numValue : 0,
+            "Portion Size (g)": typeof numValue === "number" ? numValue : 0,
           });
           break;
         default:
