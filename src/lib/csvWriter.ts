@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { Food } from "../types/food";
+import { Food } from "../types/foodcsv";
 
 // Define the path to your CSV file
 const csvFilePath = path.join(process.cwd(), "public", "foods.csv");
