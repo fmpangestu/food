@@ -2,7 +2,7 @@
 /* eslint-disable react/no-unescaped-entities */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Food } from "../types/food";
 import { Button } from "./ui/button";
@@ -33,14 +33,13 @@ export default function FoodList({ foods, setFoods }: FoodListProps) {
   // const filteredFoods = foods.filter((food) =>
   //   food.name.toLowerCase().includes(searchTerm.toLowerCase())
   // );
-
   // Prevent hydration errors
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Defer filter operation until client-side
-  const filteredFoods = !isClient
+
+const filteredFoods = !isClient
     ? []
     : (Array.isArray(foods) ? foods : []).filter((food) => {
         if (!food || typeof food !== "object") return false;
@@ -181,7 +180,7 @@ export default function FoodList({ foods, setFoods }: FoodListProps) {
             ) : (
               <tr>
                 <td colSpan={8} className="border p-4 text-center">
-                  {searchTerm && isClient
+                  {searchTerm
                     ? "No foods match your search"
                     : "No foods available"}
                 </td>
