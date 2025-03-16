@@ -33,7 +33,7 @@ export default function FoodList({ foods, setFoods }: FoodListProps) {
   // const filteredFoods = foods.filter((food) =>
   //   food.name.toLowerCase().includes(searchTerm.toLowerCase())
   // );
-  // Prevent hydration errors
+
   useEffect(() => {
     setIsClient(true);
   }, []);
