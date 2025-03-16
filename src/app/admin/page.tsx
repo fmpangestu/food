@@ -147,29 +147,69 @@ export default function AdminPage() {
   const [foods, setFoods] = useState<Food[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastFetched, setLastFetched] = useState<string>("");
 
+  // useEffect(() => {
+  //   const fetchFoods = async () => {
+  //     try {
+  //       const response = await fetch("/api/foods");
+  //       if (!response.ok) throw new Error("Failed to fetch foods");
+
+  //       const data = await response.json();
+
+  //       const validatedData = Array.isArray(data)
+  //         ? data.filter(
+  //             (food) =>
+  //               food &&
+  //               typeof food === "object" &&
+  //               typeof food.name === "string"
+  //           )
+  //         : [];
+
+  //       setFoods(validatedData);
+  //       // serFoods(data)
+  //     } catch (err) {
+  //       setError("Error loading foods");
+  //       console.error(err);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchFoods();
+  // }, []);
   useEffect(() => {
     const fetchFoods = async () => {
       try {
-        const response = await fetch("/api/foods");
+        setLoading(true);
+        console.log("Fetching foods from API...");
+
+        // Tambahkan timestamp untuk mencegah cache
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/api/foods?t=${timestamp}`);
+
         if (!response.ok) throw new Error("Failed to fetch foods");
 
         const data = await response.json();
+        console.log("Foods data received:", {
+          type: typeof data,
+          isArray: Array.isArray(data),
+          length: Array.isArray(data) ? data.length : 0,
+          sample: Array.isArray(data) && data.length > 0 ? data[0] : null,
+        });
 
-        const validatedData = Array.isArray(data)
-          ? data.filter(
-              (food) =>
-                food &&
-                typeof food === "object" &&
-                typeof food.name === "string"
-            )
-          : [];
-
-        setFoods(validatedData);
-        // serFoods(data)
+        // Validasi data sebelum update state
+        if (Array.isArray(data)) {
+          setFoods(data);
+          setLastFetched(new Date().toLocaleTimeString());
+        } else {
+          console.error("API returned non-array data:", data);
+          setFoods([]);
+          setError("Data format error");
+        }
       } catch (err) {
+        console.error("Error fetching foods:", err);
         setError("Error loading foods");
-        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -227,7 +267,7 @@ export default function AdminPage() {
       </div>
 
       <FoodList
-        foods={foods || []}
+        foods={foods || lastFetched}
         setFoods={setFoods}
         handleDelete={handleDelete}
       />

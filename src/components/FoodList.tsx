@@ -33,11 +33,14 @@ export default function FoodList({ foods, setFoods }: FoodListProps) {
   //   food.name.toLowerCase().includes(searchTerm.toLowerCase())
   // );
 
-  const filteredFoods = !foods
+const filteredFoods = !isClient
     ? []
-    : foods.filter((food) =>
-        food?.name?.toLowerCase?.().includes(searchTerm?.toLowerCase?.() || "")
-      );
+    : (Array.isArray(foods) ? foods : []).filter((food) => {
+        if (!food || typeof food !== "object") return false;
+        const name = food.Menu || "";
+        const term = searchTerm || "";
+        return name.toLowerCase().includes(term.toLowerCase());
+      });
 
   const openDeleteConfirmation = (foodName: string) => {
     setFoodToDelete(foodName);
@@ -67,7 +70,7 @@ export default function FoodList({ foods, setFoods }: FoodListProps) {
       }
 
       console.log("Makanan berhasil dihapus");
-      setFoods(foods.filter((food) => food.name !== foodToDelete));
+      setFoods(foods.filter((food) => food.Menu !== foodToDelete));
 
       // Tampilkan notifikasi sukses
       toast.success(`Makanan "${foodToDelete}" berhasil dihapus`);
@@ -111,19 +114,45 @@ export default function FoodList({ foods, setFoods }: FoodListProps) {
           <tbody>
             {filteredFoods.length > 0 ? (
               filteredFoods.map((food, index) => (
-                <tr key={`${food?.name || `food-${index}`}-${index}`}>
-                  <td className="border p-2">{food?.name || "Unnamed"}</td>
-                  <td className="border p-2">{food?.calories ?? 0}</td>
-                  <td className="border p-2">{food?.protein ?? 0}</td>
-                  <td className="border p-2">{food?.fat ?? 0}</td>
-                  <td className="border p-2">{food?.carbs ?? 0}</td>
-                  <td className="border p-2">{food?.sodium ?? 0}</td>
-                  <td className="border p-2">{food?.porpotionSize ?? 0}</td>
+                <tr key={`${food?.Menu || `food-${index}`}-${index}`}>
+                  <td className="border p-2">
+                    {food?.name || food?.Menu || "Unnamed"}
+                  </td>
+                  <td className="border p-2">
+                    {food?.calories ||
+                      food?.Energy ||
+                      food?.["Energy (kcal)"] ||
+                      0}
+                  </td>
+                  <td className="border p-2">
+                    {food?.protein ||
+                      food?.Protein ||
+                      food?.["Protein (g)"] ||
+                      0}
+                  </td>
+                  <td className="border p-2">
+                    {food?.fat || food?.Fat || food?.["Fat (g)"] || 0}
+                  </td>
+                  <td className="border p-2">
+                    {food?.carbs ||
+                      food?.Carbohydrates ||
+                      food?.["Carbohydrates (g)"] ||
+                      0}
+                  </td>
+                  <td className="border p-2">
+                    {food?.sodium || food?.Sodium || food?.["Sodium (mg)"] || 0}
+                  </td>
+                  <td className="border p-2">
+                    {food?.porpotionSize ||
+                      food?.Porpotion_Size ||
+                      food?.["Portion Size (g)"] ||
+                      0}
+                  </td>
                   <td className="border p-2">
                     <div className="flex space-x-2">
                       <Link
                         href={`/admin/edit-food/${encodeURIComponent(
-                          food?.name || ""
+                          food?.Menu || ""
                         )}`}
                         className="bg-blue-500 text-white w-1/2 px-1 flex justify-center items-center text-center py-1 rounded-md hover:bg-blue-600 text-sm"
                       >
@@ -131,10 +160,10 @@ export default function FoodList({ foods, setFoods }: FoodListProps) {
                       </Link>
                       <Button
                         onClick={() =>
-                          food?.name && openDeleteConfirmation(food.name)
+                          food?.Menu && openDeleteConfirmation(food.Menu)
                         }
                         className="bg-red-500 text-white w-1/2 px-1 text-center py-1 rounded-md hover:bg-red-600 text-sm"
-                        disabled={!food?.name}
+                        disabled={!food?.Menu}
                       >
                         Delete
                       </Button>
