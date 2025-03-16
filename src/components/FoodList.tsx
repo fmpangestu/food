@@ -34,7 +34,6 @@ export default function FoodList({ foods, setFoods }: FoodListProps) {
   //   food.name.toLowerCase().includes(searchTerm.toLowerCase())
   // );
 
-  // Prevent hydration errors
   useEffect(() => {
     setIsClient(true);
   }, []);
