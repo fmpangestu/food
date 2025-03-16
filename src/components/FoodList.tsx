@@ -29,11 +29,10 @@ export default function FoodList({ foods, setFoods }: FoodListProps) {
   const [foodToDelete, setFoodToDelete] = useState<string | null>(null);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   // const filteredFoods = foods.filter((food) =>
   //   food.name.toLowerCase().includes(searchTerm.toLowerCase())
   // );
-
-  const [isClient, setIsClient] = useState(false);
 
   // Prevent hydration errors
   useEffect(() => {
