@@ -37,7 +37,10 @@ export async function PUT(request: NextRequest) {
     }
 
     const updatedFood = await request.json();
-    const success = await updateFood(decodeURIComponent(id), updatedFood);
+    const success = await updateFoodInServer(
+      decodeURIComponent(id),
+      updatedFood
+    );
 
     if (success) {
       return NextResponse.json({ success: true, food: updatedFood });
@@ -60,7 +63,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     console.log(`API: Mencoba menghapus makanan dengan id "${id}"`);
-    const success = await deleteFood(decodeURIComponent(id));
+    const success = await deleteFoodFromServer(decodeURIComponent(id));
 
     if (success) {
       return NextResponse.json({ success: true });
