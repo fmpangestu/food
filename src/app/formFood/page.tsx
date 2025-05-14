@@ -883,12 +883,14 @@ const FoodRecommendation = () => {
     else mealTitle = "Makan Malam";
 
     return (
-      <div className="mt-2 border-2 border-[#00712D] bg-white/80 backdrop-blur-sm rounded-lg p-4">
+      <div className="mt-2 bg-white rounded-lg p-4">
         <div className="flex justify-between items-center border-b border-[#00712D]/30 pb-2 mb-3">
-          <h2 className="font-bold text-xl">Menu {mealTitle}</h2>
+          <h2 className="font-semibold text-sm lg:text-lg text-sky-500">
+            Menu {mealTitle}
+          </h2>
           <button
             onClick={() => getNewMealRecommendations(mealType)}
-            className="bg-[#D5ED9F] text-[#00712D] py-1 px-4 rounded-full font-medium hover:bg-[#c0e47a] transition-colors"
+            className="bg-gradient-to-r from-sky-800 to-blue-600 text-white py-1 px-4 text-[10px] lg:text-sm rounded-full font-medium hover:bg-[#c0e47a] transition-colors"
           >
             Ganti Menu
           </button>
@@ -899,7 +901,10 @@ const FoodRecommendation = () => {
         {/* Individual food items */}
         <div className="space-y-3">
           {foods.map((food, index) => (
-            <div key={index} className="p-3 bg-[#D5ED9F]/10 rounded-lg">
+            <div
+              key={index}
+              className="p-3 bg-gradient-to-r from-sky-800 to-blue-600 rounded-lg"
+            >
               <div className="font-bold mb-1">{food.name}</div>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
@@ -929,7 +934,7 @@ const FoodRecommendation = () => {
             </div>
           ))}
           <div className="mb-4">
-            <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center justify-between mb-1 text-sky-700">
               <span className="font-semibold">Total Kalori:</span>
               <span>
                 {totalCalories} kcal ({caloriePercentage}% dari target)
@@ -941,7 +946,7 @@ const FoodRecommendation = () => {
                   caloriePercentage <= 80
                     ? "bg-green-600"
                     : caloriePercentage <= 110
-                    ? "bg-yellow-400"
+                    ? "bg-blue-600"
                     : "bg-red-500"
                 }`}
                 style={{ width: `${Math.min(caloriePercentage, 150)}%` }}
@@ -955,7 +960,7 @@ const FoodRecommendation = () => {
 
   return (
     <>
-      <div className="md:container mx-2 md:mx-auto p-6 text-white bg-[#00712D] mt-4 rounded-xl">
+      <div className="md:container mx-2 md:mx-auto p-6 text-white  bg-gradient-to-tr from-blue-500 to-green-500 mt-4 rounded-xl">
         <h1 className="text-2xl font-bold mb-4">Rekomendasi Makanan Sehat</h1>
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
@@ -1051,7 +1056,7 @@ const FoodRecommendation = () => {
 
           <button
             type="submit"
-            className="bg-[#D5ED9F] font-semibold w-full text-[#00712D] py-2 px-4 rounded"
+            className=" bg-transparent border-2 border-sky-200 font-semibold w-full text-white py-2 px-4 rounded"
             disabled={loading}
           >
             {loading ? "Loading..." : "Submit"}
@@ -1060,18 +1065,18 @@ const FoodRecommendation = () => {
       </div>
       <div className="md:container mx-2 md:mx-auto mb-5 rounded-xl">
         {idealWeight && (
-          <div className=" mt-4 bg-[#D5ED9F] text-[#00712D] rounded-lg p-4 ">
+          <div className=" mt-4  bg-gradient-to-br from-blue-500 to-green-500 text-white rounded-lg p-4 ">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-sm lg:text-xl font-semibold">
                 Berat Badan IdealMu: {idealWeight}
               </h2>
               <button
                 onClick={handlePrintPDF}
-                className="bg-[#00712D] text-[10px] lg:text-lg text-white py-1.5 px-4 lg:px-6 rounded-lg font-medium hover:bg-[#005c24] transition-colors flex items-center"
+                className="bg-white text-[10px]  lg:text-sm text-sky-500 py-1.5 px-2 lg:px-6 rounded-lg font-medium  transition-colors flex items-center"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-3.5 w-3.5 lg:h-5 lg:w-5 mr-2"
+                  className="h-3.5 w-3.5 lg:h-4 lg:w-4 mr-2"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -1087,9 +1092,11 @@ const FoodRecommendation = () => {
               </button>
             </div>
             {success && (
-              <p className="w-full text-[#FF9100] bg-[#FFFBE6] px-2 py-1 rounded-lg">
-                Note: {success}
-              </p>
+              <div className="p-[3px] bg-gradient-to-r from-white to-sky-500 rounded-lg">
+                <p className="w-full bg-gradient-to-r from-sky-500 to-blue-800 text-transparent bg-clip-text px-2 py-1 rounded-md">
+                  Note: {success}
+                </p>
+              </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2">
               <h3 className="mt-2">Kalori HarianMu: {calorieNeeds}kcal</h3>
@@ -1105,14 +1112,14 @@ const FoodRecommendation = () => {
               <h3 className="text-xl font-semibold">
                 Pembagian Kalori Harian:
               </h3>
-              <ul className="mt-5 grid lg:grid-cols-3 justify-between text-center items-center ">
-                <li className="bg-white/80 w-52 rounded-full py-1 translate-x-1/2">
+              <ul className="mt-5 grid text-sky-500 font-semibold lg:grid-cols-3 justify-between text-center items-center ">
+                <li className="bg-white w-52 rounded-full py-1 translate-x-1/2">
                   Sarapan: {breakfastCalories} kcal
                 </li>
-                <li className="bg-white/80 w-52 rounded-full py-1 translate-x-1/2">
+                <li className="bg-white w-52 rounded-full py-1 translate-x-1/2">
                   Makan Siang: {lunchCalories} kcal
                 </li>
-                <li className="bg-white/80 w-52 rounded-full py-1 translate-x-1/2">
+                <li className="bg-white w-52 rounded-full py-1 translate-x-1/2">
                   Makan Malam: {dinnerCalories} kcal
                 </li>
               </ul>

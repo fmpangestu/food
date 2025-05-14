@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  background-color: #fffbe6;
+  background-color: #f0f5fc;
 }
 select option:hover {
   background: var(--background) !important;
