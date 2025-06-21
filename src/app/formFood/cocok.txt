@@ -1,0 +1,38 @@
+// "use client";
+
+// import { useRecommendation } from "@/hooks/useRecommendation";
+// import RecommendationForm from "@/components/recommendation/RecommendationForm";
+// import RecommendationResult from "@/components/recommendation/RecommendationResult";
+
+// export default function FoodRecommendationPage() {
+//   const {
+//     formData,
+//     isLoading,
+//     result,
+//     recommendedFoods,
+//     handleInputChange,
+//     handleSubmit,
+//     getNewMealRecommendations, // Pastikan ini ada
+//   } = useRecommendation();
+
+//   return (
+//     <>
+//       <RecommendationForm
+//         formData={formData}
+//         isLoading={isLoading}
+//         handleInputChange={handleInputChange}
+//         handleSubmit={handleSubmit}
+//       />
+
+//       {isLoading && <div className="text-center p-8">Mencari...</div>}
+
+//       {result && !isLoading && (
+//         <RecommendationResult
+//           result={result}
+//           recommendedFoods={recommendedFoods}
+//           getNewMealRecommendations={getNewMealRecommendations} // Berikan fungsi ini ke komponen hasil
+//         />
+//       )}
+//     </>
+//   );
+// }

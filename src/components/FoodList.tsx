@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable react/no-unescaped-entities */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -16,74 +14,50 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "./ui/alert-dialog";
+
 interface FoodListProps {
-  foods: Food[];
-  setFoods: React.Dispatch<React.SetStateAction<Food[]>>;
-  handleDelete: (foodName: string) => Promise<void>;
+  // Ganti nama prop agar lebih jelas dan sesuai dengan AdminPage
+  initialFoods: Food[];
 }
 
-export default function FoodList({ foods, setFoods }: FoodListProps) {
+export default function FoodList({ initialFoods }: FoodListProps) {
+  const [foods, setFoods] = useState<Food[]>(initialFoods);
   const [searchTerm, setSearchTerm] = useState("");
   const [foodToDelete, setFoodToDelete] = useState<string | null>(null);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isClient, setIsClient] = useState(false);
-  // const filteredFoods = foods.filter((food) =>
-  //   food.name.toLowerCase().includes(searchTerm.toLowerCase())
-  // );
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
+    setFoods(initialFoods);
+  }, [initialFoods]);
 
-  // Defer filter operation until client-side
-  const filteredFoods = !isClient
-    ? []
-    : (Array.isArray(foods) ? foods : []).filter((food) => {
-        if (!food || typeof food !== "object") return false;
-        const name = food.Menu || "";
-        const term = searchTerm || "";
-        return name.toLowerCase().includes(term.toLowerCase());
-      });
+  const filteredFoods = (Array.isArray(foods) ? foods : []).filter((food) =>
+    food.Menu.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const openDeleteConfirmation = (foodName: string) => {
     setFoodToDelete(foodName);
     setIsAlertOpen(true);
   };
+
   const handleDelete = async () => {
     if (!foodToDelete) return;
-
     setIsDeleting(true);
     try {
-      console.log(`Mencoba menghapus makanan: "${foodToDelete}"`);
-
-      const url = `/api/foods/${encodeURIComponent(foodToDelete)}`;
-      console.log(`Mengirim request DELETE ke: ${url}`);
-
-      const response = await fetch(url, {
-        method: "DELETE",
-      });
-
+      const url = `/api/fods/${encodeURIComponent(foodToDelete)}`;
+      const response = await fetch(url, { method: "DELETE" });
       const data = await response.json();
-      console.log("Response status:", response.status);
-      console.log("Response data:", data);
-
       if (!response.ok) {
-        console.error("Delete response error:", data);
         throw new Error(data.error || "Gagal menghapus makanan");
       }
-
-      console.log("Makanan berhasil dihapus");
-      setFoods(foods.filter((food) => food.Menu !== foodToDelete));
-
-      // Tampilkan notifikasi sukses
+      setFoods((prevFoods) =>
+        prevFoods.filter((food) => food.Menu !== foodToDelete)
+      );
       toast.success(`Makanan "${foodToDelete}" berhasil dihapus`);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
       toast.error(`Gagal menghapus makanan: ${errorMessage}`);
-      console.error("Delete error:", err);
     } finally {
       setIsDeleting(false);
       setFoodToDelete(null);
@@ -94,6 +68,7 @@ export default function FoodList({ foods, setFoods }: FoodListProps) {
   return (
     <div>
       <div className="mb-4">
+        {/* ... input pencarian ... */}
         <input
           type="text"
           placeholder="Cari makanan..."
@@ -107,69 +82,47 @@ export default function FoodList({ foods, setFoods }: FoodListProps) {
         <table className="min-w-full bg-white border">
           <thead>
             <tr>
-              <th className="border p-2">Name</th>
-              <th className="border p-2">Calories</th>
+              <th className="border p-2">No</th>
+              <th className="border p-2">Nama Makanan</th>
+              <th className="border p-2">Energi (kcal)</th>
               <th className="border p-2">Protein (g)</th>
-              <th className="border p-2">Fat (g)</th>
-              <th className="border p-2">Carbs (g)</th>
+              <th className="border p-2">Lemak (g)</th>
+              <th className="border p-2">Karbohidrat (g)</th>
+              <th className="border p-2">Gula (g)</th>
               <th className="border p-2">Sodium (mg)</th>
-              <th className="border p-2">Portion (g)</th>
-              <th className="border p-2">Actions</th>
+              <th className="border p-2">Porsi (g)</th>
+              <th className="border p-2">Aksi</th>
             </tr>
           </thead>
+          {/* PASTIKAN STRUKTUR INI DIIKUTI DENGAN BENAR */}
           <tbody>
             {filteredFoods.length > 0 ? (
-              filteredFoods.map((food, index) => (
-                <tr key={`${food?.Menu || `food-${index}`}-${index}`}>
-                  <td className="border p-2">
-                    {food?.name || food?.Menu || "Unnamed"}
+              filteredFoods.map((food) => (
+                <tr key={String(food._id) || food.Menu}>
+                  <td className="border p-2 text-center">
+                    {foods.indexOf(food) + 1}
                   </td>
-                  <td className="border p-2">
-                    {food?.calories ||
-                      food?.Energy ||
-                      food?.["Energy (kcal)"] ||
-                      0}
-                  </td>
-                  <td className="border p-2">
-                    {food?.protein ||
-                      food?.Protein ||
-                      food?.["Protein (g)"] ||
-                      0}
-                  </td>
-                  <td className="border p-2">
-                    {food?.fat || food?.Fat || food?.["Fat (g)"] || 0}
-                  </td>
-                  <td className="border p-2">
-                    {food?.carbs ||
-                      food?.Carbohydrates ||
-                      food?.["Carbohydrates (g)"] ||
-                      0}
-                  </td>
-                  <td className="border p-2">
-                    {food?.sodium || food?.Sodium || food?.["Sodium (mg)"] || 0}
-                  </td>
-                  <td className="border p-2">
-                    {food?.porpotionSize ||
-                      food?.Porpotion_Size ||
-                      food?.["Portion Size (g)"] ||
-                      0}
-                  </td>
+                  <td className="border p-2">{food.Menu}</td>
+                  <td className="border p-2">{food["Energy (kcal)"]}</td>
+                  <td className="border p-2">{food["Protein (g)"]}</td>
+                  <td className="border p-2">{food["Fat (g)"]}</td>
+                  <td className="border p-2">{food["Carbohydrates (g)"]}</td>
+                  <td className="border p-2">{food["Sugar (g)"] ?? "N/A"}</td>
+                  <td className="border p-2">{food["Sodium (mg)"]}</td>
+                  <td className="border p-2">{food["Portion Size (g)"]}</td>
                   <td className="border p-2">
                     <div className="flex space-x-2">
                       <Link
                         href={`/admin/edit-food/${encodeURIComponent(
-                          food?.Menu || ""
+                          food.Menu
                         )}`}
                         className="bg-blue-500 text-white w-1/2 px-1 flex justify-center items-center text-center py-1 rounded-md hover:bg-blue-600 text-sm"
                       >
                         Edit
                       </Link>
                       <Button
-                        onClick={() =>
-                          food?.Menu && openDeleteConfirmation(food.Menu)
-                        }
+                        onClick={() => openDeleteConfirmation(food.Menu)}
                         className="bg-red-500 text-white w-1/2 px-1 text-center py-1 rounded-md hover:bg-red-600 text-sm"
-                        disabled={!food?.Menu}
                       >
                         Delete
                       </Button>
@@ -178,23 +131,26 @@ export default function FoodList({ foods, setFoods }: FoodListProps) {
                 </tr>
               ))
             ) : (
+              // Ini adalah cara yang BENAR untuk menampilkan pesan "kosong"
               <tr>
-                <td colSpan={8} className="border p-4 text-center">
-                  {searchTerm && isClient
-                    ? "No foods match your search"
-                    : "No foods available"}
+                <td colSpan={9} className="border p-4 text-center">
+                  {searchTerm
+                    ? "Tidak ada makanan yang cocok"
+                    : "Tidak ada makanan tersedia"}
                 </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
+
+      {/* ... AlertDialog ... */}
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Konfirmasi Hapus</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin menghapus makanan "{foodToDelete}"?
+              Apakah Anda yakin ingin menghapus makanan {foodToDelete}?
               <br />
               Tindakan ini tidak dapat dibatalkan.
             </AlertDialogDescription>

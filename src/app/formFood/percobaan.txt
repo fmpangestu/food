@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useEffect, useState, useRef } from "react";
-// import { readCSV } from "../../lib/csvReader";
+import { readCSV } from "../../lib/csvReader";
 import cosineSimilarity from "../../lib/cosineSimilarity";
 
 // import jsPDF from "jspdf";
@@ -33,7 +32,7 @@ const FoodRecommendation = () => {
     height: "",
     age: "",
     gender: "male",
-    activityLevel: "sedentary",
+    activityLevel: "sedentary", // Default to sedentary
   });
   const [foods, setFoods] = useState<Food[]>([]);
 
@@ -89,55 +88,44 @@ const FoodRecommendation = () => {
     dinner: new Set(),
   });
 
-  // SESUDAH (Ganti dengan kode ini)
   useEffect(() => {
     const fetchFoods = async () => {
       try {
-        // Langkah 1: Ganti sumber data ke API backend Anda
-        // Pastikan endpointnya benar, yaitu '/api/fods'
-        const response = await fetch("/api/fods");
+        const rawData = await readCSV("/foods.csv");
 
-        if (!response.ok) {
-          throw new Error("Gagal mengambil data makanan dari server.");
-        }
-
-        const dataFromMongo = await response.json();
-
-        // Langkah 2: Petakan (Map) data dari format MongoDB ke format yang dibutuhkan komponen
-        if (Array.isArray(dataFromMongo)) {
-          const typedData: Food[] = dataFromMongo.map((item: any) => ({
-            // Kiri: Key yang diharapkan komponen (camelCase)
-            // Kanan: Key yang datang dari MongoDB
-            name: item.Menu,
-            calories: Number(item["Energy (kcal)"]),
-            protein: Number(item["Protein (g)"]),
-            fat: Number(item["Fat (g)"]),
-            carbs: Number(item["Carbohydrates (g)"]),
-            sodium: Number(item["Sodium (mg)"]),
-            porpotionSize: Number(item["Portion Size (g)"] || 100),
-            similarityScore: undefined, // Default value
+        // Type check and transform the data if needed
+        if (Array.isArray(rawData)) {
+          // Map the data to ensure correct property names
+          const typedData: Food[] = rawData.map((item) => ({
+            name: item.name,
+            calories: Number(item.calories),
+            protein: Number(item.protein),
+            fat: Number(item.fat),
+            carbs: Number(item.carbs),
+            sodium: Number(item.sodium),
+            porpotionSize: Number(
+              item.porpotionSize || item.porpotionSize || 100
+            ), // Handle both spellings
+            similarityScore: undefined,
           }));
 
           if (!typedData || typedData.length === 0) {
-            console.error("Tidak ada makanan yang dimuat atau data kosong");
+            console.error("No foods loaded or empty data array");
           } else {
-            console.log(
-              "Data makanan berhasil dimuat dari MongoDB:",
-              typedData.slice(0, 3)
-            );
+            console.log("Loaded foods sample:", typedData.slice(0, 3));
           }
 
           setFoods(typedData);
         } else {
-          console.error("Format data tidak valid dari API");
+          console.error("Invalid data format returned from readCSV");
         }
       } catch (error) {
-        console.error("Error saat memuat data makanan dari MongoDB:", error);
+        console.error("Error loading food data:", error);
       }
     };
 
     fetchFoods();
-  }, []); // Dependency array kosong agar hanya berjalan sekali saat komponen dimuat
+  }, []);
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -167,12 +155,25 @@ const FoodRecommendation = () => {
   };
 
   const calculateIdealWeight = (height: number) => {
+    // Menggunakan standar IMT Asia Pasifik yang umum (Normal: 18.5 - 22.9)
+    // Namun, untuk rentang berat ideal, seringkali digunakan batas 18.5 - 24.9 agar lebih fleksibel
     const minBMI = 18.5;
-    const maxBMI = 24.9;
+    const maxBMI = 24.9; // Batas atas overweight sebelum obesitas I
     const heightInMeters = height / 100;
     const minWeight = minBMI * heightInMeters * heightInMeters;
     const maxWeight = maxBMI * heightInMeters * heightInMeters;
     return `${Math.round(minWeight)} - ${Math.round(maxWeight)} kg`;
+  };
+
+  // Definisikan Faktor Aktivitas Fisik (FA) berdasarkan sumber buku dan jenis kelamin
+  // Kunci objek (sedentary, light, moderate, active) akan sesuai dengan value dari dropdown form
+  const activityFactors: {
+    [key: string]: { male: number; female: number };
+  } = {
+    sedentary: { male: 1.2, female: 1.2 }, // Dari buku: "Istirahat ditempat tidur"
+    light: { male: 1.5, female: 1.5 },     // Dari buku: "Ringan"
+    moderate: { male: 1.8, female: 1.7 }, // Dari buku: "Sedang"
+    active: { male: 2.1, female: 1.8 },    // Dari buku: "Berat"
   };
 
   const calculateCalorieNeeds = (
@@ -180,23 +181,31 @@ const FoodRecommendation = () => {
     height: number,
     age: number,
     gender: string,
-    activityLevel: string
+    activityLevelKey: string // Ini adalah key seperti "sedentary", "light", dll.
   ): number => {
     let bmr: number;
+    // Rumus Mifflin-St Jeor untuk BMR
     if (gender === "male") {
       bmr = 10 * weight + 6.25 * height - 5 * age + 5;
     } else {
       bmr = 10 * weight + 6.25 * height - 5 * age - 161;
     }
 
-    const activityFactors: { [key: string]: number } = {
-      sedentary: 1.2,
-      light: 1.375,
-      moderate: 1.55,
-      active: 1.725,
-    };
+    // Dapatkan objek faktor untuk level aktivitas yang dipilih
+    const selectedLevelFactors = activityFactors[activityLevelKey];
 
-    return Math.round(bmr * (activityFactors[activityLevel] || 1.2));
+    let factor: number;
+    if (selectedLevelFactors) {
+      // Pilih faktor berdasarkan jenis kelamin
+      factor = gender === "male" ? selectedLevelFactors.male : selectedLevelFactors.female;
+    } else {
+      // Fallback jika activityLevelKey tidak dikenal (seharusnya tidak terjadi jika form valid)
+      // Default ke sedentary
+      factor = gender === "male" ? activityFactors.sedentary.male : activityFactors.sedentary.female;
+      console.warn(`Unknown activity level: ${activityLevelKey}, defaulting to sedentary.`);
+    }
+
+    return Math.round(bmr * factor);
   };
 
   const calculateDailyNutrientNeeds = (
@@ -205,27 +214,34 @@ const FoodRecommendation = () => {
     age: number,
     gender: string
   ) => {
-    const proteinNeeds = Math.round(weight * 0.8);
-    const sugarNeeds = Math.min((calories * 0.1) / 4, 50);
+    // Kebutuhan protein bisa bervariasi, 0.8g/kgBB adalah rekomendasi umum untuk dewasa
+    const proteinNeeds = Math.round(weight * 0.8); // Gram
+    // Rekomendasi asupan gula harian tidak lebih dari 10% total kalori, atau maks 50g (WHO)
+    const sugarNeeds = Math.round(Math.min((calories * 0.1) / 4, 50)); // Gram
     setDailySugarNeeds(sugarNeeds);
-    let sodiumNeeds: number;
+
+    // Kebutuhan sodium berdasarkan usia (contoh dari skripsi Anda)
+    let sodiumNeeds: number; // Miligram
     if (age < 1) {
-      sodiumNeeds = 1;
+      sodiumNeeds = 1000; // 1 gram = 1000 mg
     } else if (age <= 3) {
-      sodiumNeeds = 2;
+      sodiumNeeds = 2000; // 2 gram
     } else if (age <= 6) {
-      sodiumNeeds = 3;
+      sodiumNeeds = 3000; // 3 gram
     } else if (age <= 10) {
-      sodiumNeeds = 5;
+      sodiumNeeds = 5000; // 5 gram
     } else {
-      sodiumNeeds = 6;
+      sodiumNeeds = 2000; // Rekomendasi umum WHO/Kemenkes untuk dewasa < 2000-2400 mg (setara 5-6g garam)
     }
-    const saturedFatLimit = gender === "male" ? 30 : 20;
-    const carbsNeeds = Math.round(calories * 0.55) / 4;
+    // Batas lemak jenuh (contoh dari skripsi Anda)
+    const saturedFatLimitVal = gender === "male" ? 30 : 20; // Gram
+    // Kebutuhan karbohidrat sekitar 45-65% dari total kalori. Kita ambil rerata 55%.
+    const carbsNeeds = Math.round(((calories * 0.55) / 4)); // Gram
+
     setDailySodiumNeeds(sodiumNeeds);
     setDailyProteinNeeds(proteinNeeds);
     setDailyCarbsNeeds(carbsNeeds);
-    setSaturedFatLimit(saturedFatLimit);
+    setSaturedFatLimit(saturedFatLimitVal);
   };
 
   // Global set to track used food names across all meals
@@ -250,7 +266,7 @@ const FoodRecommendation = () => {
     } else if (mealType === "dinner") {
       minCaloriesPerFood = perFoodTarget * 0.6;
       maxCaloriesPerFood = perFoodTarget * 1.4;
-    } else {
+    } else { // Lunch
       minCaloriesPerFood = perFoodTarget * 0.7;
       maxCaloriesPerFood = perFoodTarget * 1.3;
     }
@@ -292,16 +308,24 @@ const FoodRecommendation = () => {
     }
 
     // Create target "profile" for similarity calculation
+    // Distribute daily needs based on meal percentages (B:25%, L:50%, D:25%)
+    const mealProteinFactor = mealType === "lunch" ? 0.5 : 0.25;
+    const mealCarbsFactor = mealType === "lunch" ? 0.5 : 0.25;
+    // Assuming roughly 30% calories from fat for the meal
+    const mealFatCalories = targetCalories * 0.3;
+
+
     const targetProfile = {
       calories: perFoodTarget,
       protein: dailyProteinNeeds
-        ? (dailyProteinNeeds * (mealType === "lunch" ? 0.5 : 0.25)) / count
-        : 0,
+        ? (dailyProteinNeeds * mealProteinFactor) / count
+        : 20 / count, // Fallback protein
       carbs: dailyCarbsNeeds
-        ? (dailyCarbsNeeds * (mealType === "lunch" ? 0.5 : 0.25)) / count
-        : 0,
-      fat: (targetCalories * 0.3) / 9 / count,
+        ? (dailyCarbsNeeds * mealCarbsFactor) / count
+        : 50 / count, // Fallback carbs
+      fat: mealFatCalories / 9 / count, // Convert fat calories to grams
     };
+
 
     // Calculate similarity scores
     const foodsWithScores = availableFoods.map((food) => {
@@ -316,16 +340,19 @@ const FoodRecommendation = () => {
       // Calculate similarity with specific focus on calories matching
       let calorieMatch =
         1 - Math.abs(food.calories - perFoodTarget) / perFoodTarget;
+      calorieMatch = Math.max(0, calorieMatch); // Ensure it's not negative
 
       // Add penalty for exceeding target calories, especially for breakfast
       if (food.calories > perFoodTarget) {
         const overagePercent = (food.calories - perFoodTarget) / perFoodTarget;
         if (mealType === "breakfast") {
-          calorieMatch -= overagePercent * 0.5;
+          calorieMatch -= overagePercent * 0.5; // Heavier penalty for breakfast
         } else {
           calorieMatch -= overagePercent * 0.3;
         }
       }
+      calorieMatch = Math.max(0, calorieMatch); // Ensure it's not negative after penalty
+
 
       const similarityScore =
         cosineSimilarity(foodVector, targetVector) * (0.7 + 0.3 * calorieMatch);
@@ -358,8 +385,8 @@ const FoodRecommendation = () => {
         // Only add if not already in the temporary set
         if (
           !tempUsedNames.has(food.name) &&
-          !usedFoodNames.has(food.name) &&
-          !excludedFoods.has(food.name)
+          !usedFoodNames.has(food.name) && // Check against globally used foods
+          !excludedFoods.has(food.name)    // Check against specifically excluded for this run
         ) {
           selectedFoods.push(food);
           tempUsedNames.add(food.name);
@@ -368,7 +395,6 @@ const FoodRecommendation = () => {
 
       // If we don't have enough foods but are on later attempts, relax constraints
       if (selectedFoods.length < count && attempts > maxAttempts / 2) {
-        // Add any foods that fit calorie range and aren't used in THIS selection
         for (let i = 0; i < foods.length && selectedFoods.length < count; i++) {
           const food = foods[i];
           if (
@@ -381,8 +407,6 @@ const FoodRecommendation = () => {
             tempUsedNames.add(food.name);
           }
         }
-
-        // If we still don't have enough, try again with more relaxed constraints
         if (selectedFoods.length < count) {
           continue;
         }
@@ -396,15 +420,17 @@ const FoodRecommendation = () => {
           .join("|");
 
         if (excludedCombinations[mealType].has(foodSignature)) {
-          // Try again with the top items excluded
-          selectedFoods.forEach((food) => excludedFoods.add(food.name));
+          // Add the first food of this failed combination to the broader excluded set for the next attempt
+          if (selectedFoods.length > 0) {
+             excludedFoods.add(selectedFoods[0].name);
+          }
           continue;
         }
 
         // Valid new combination - add to used foods
         selectedFoods.forEach((food) => usedFoodNames.add(food.name));
 
-        // Add to all excluded foods for this meal type
+        // Add to all excluded foods for this meal type for future "Ganti Menu"
         selectedFoods.forEach((food) => {
           allExcludedFoods.current[mealType].add(food.name);
         });
@@ -417,8 +443,9 @@ const FoodRecommendation = () => {
     if (selectedFoods.length < count) {
       console.log(`${mealType}: Using fallback foods - all attempts exhausted`);
 
-      // Reset excluded foods for this meal type to avoid getting stuck
+      // Reset excluded foods for this meal type to avoid getting stuck in future "Ganti Menu"
       allExcludedFoods.current[mealType].clear();
+      excludedCombinations[mealType].clear(); // Also clear combination exclusions
 
       // Fallback to any available foods that meet calorie requirements
       const fallbackFoods = foods
@@ -430,7 +457,7 @@ const FoodRecommendation = () => {
         )
         .slice(0, count);
 
-      // If we still don't have enough, take any available foods
+      // If we still don't have enough, take any available foods, prioritizing calorie closeness
       if (fallbackFoods.length < count) {
         const anyFoods = foods
           .filter((food) => !usedFoodNames.has(food.name))
@@ -439,10 +466,11 @@ const FoodRecommendation = () => {
               Math.abs(a.calories - perFoodTarget) -
               Math.abs(b.calories - perFoodTarget)
           )
-          .slice(0, count);
+          .slice(0, count - fallbackFoods.length); // Only take remaining needed
 
-        anyFoods.forEach((food) => usedFoodNames.add(food.name));
-        return anyFoods;
+        const combinedFallback = [...fallbackFoods, ...anyFoods];
+        combinedFallback.forEach((food) => usedFoodNames.add(food.name));
+        return combinedFallback.slice(0, count); // Ensure we don't exceed count
       }
 
       fallbackFoods.forEach((food) => usedFoodNames.add(food.name));
@@ -465,6 +493,10 @@ const FoodRecommendation = () => {
 
     // Clear used foods when generating full recommendations
     usedFoodNames.clear();
+    allExcludedFoods.current.breakfast.clear();
+    allExcludedFoods.current.lunch.clear();
+    allExcludedFoods.current.dinner.clear();
+
 
     // Reset excluded combinations
     setExcludedCombinations({
@@ -472,6 +504,9 @@ const FoodRecommendation = () => {
       lunch: new Set(),
       dinner: new Set(),
     });
+     // Reset menu change counts
+    setMenuChangeCount({ breakfast: 0, lunch: 0, dinner: 0 });
+
 
     // Get multiple recommendations for each meal
     const breakfast = getMultipleRecommendations(
@@ -523,8 +558,7 @@ const FoodRecommendation = () => {
         newExcluded.add(foodSignature);
 
         // Reset if we've excluded too many combinations to prevent getting stuck
-        // This allows continuous use without needing a reset button
-        if (newExcluded.size > 15) {
+        if (newExcluded.size > 15) { // Limit to 15 excluded combinations
           console.log(
             `${mealType}: Too many exclusions, resetting except current combination`
           );
@@ -540,51 +574,29 @@ const FoodRecommendation = () => {
         };
       });
 
-      // Remove these foods from used foods
+      // Remove these foods from used foods so they can be picked again if needed for other meals
+      // or if exclusions are reset
       currentFoods.forEach((food) => {
         usedFoodNames.delete(food.name);
       });
     }
 
-    // Build a comprehensive set of foods to exclude
-    const excludedFoodsSet = new Set<string>();
+    // Build a comprehensive set of foods to exclude for this specific call
+    const foodsToExcludeForThisCall = new Set<string>();
 
-    // Add foods from other meals that should be excluded
-    for (const [type, foods] of Object.entries(recommendedFoods)) {
+    // Add foods from *other* meals (that are currently recommended)
+    for (const [type, foodsInMeal] of Object.entries(recommendedFoods)) {
       if (type !== mealType) {
-        // Don't exclude from the meal we're changing
-        foods.forEach((food) => excludedFoodsSet.add(food.name));
+        foodsInMeal.forEach((food) => foodsToExcludeForThisCall.add(food.name));
       }
     }
+    
+    // Add foods that were part of *previously excluded combinations* for THIS meal type
+    // This is to ensure we try to get truly new combinations
+    excludedCombinations[mealType].forEach(comboSignature => {
+        comboSignature.split('|').forEach(foodName => foodsToExcludeForThisCall.add(foodName));
+    });
 
-    // If we've changed menu many times, start clearing old exclusions gradually
-    // This ensures we don't get stuck with too many excluded foods
-    const changeThreshold = 10;
-    if (menuChangeCount[mealType] > changeThreshold) {
-      // Start clearing past exclusions gradually
-      const clearFactor = Math.min(
-        0.9,
-        (menuChangeCount[mealType] - changeThreshold) * 0.1
-      );
-
-      // Only use a subset of excluded foods to avoid getting stuck
-      let excludedCounter = 0;
-      allExcludedFoods.current[mealType].forEach((food) => {
-        // Add only some of the excluded foods based on clearFactor
-        if (Math.random() > clearFactor) {
-          excludedFoodsSet.add(food);
-          excludedCounter++;
-        }
-      });
-      console.log(
-        `${mealType}: Using ${excludedCounter} of ${allExcludedFoods.current[mealType].size} excluded foods after ${menuChangeCount[mealType]} changes`
-      );
-    } else {
-      // Add all previously excluded foods for this meal if we haven't changed too many times
-      allExcludedFoods.current[mealType].forEach((food) => {
-        excludedFoodsSet.add(food);
-      });
-    }
 
     // Get target calories for this meal
     let targetCalories;
@@ -593,16 +605,15 @@ const FoodRecommendation = () => {
     else targetCalories = dinnerCalories || 0;
 
     // Dynamically adjust max attempts based on how many times we've changed the menu
-    // This gives better results for frequent menu changes
     const dynamicMaxAttempts = Math.min(30, 20 + menuChangeCount[mealType]);
 
     // Get new recommendations for this meal
     const newRecommendations = getMultipleRecommendations(
       targetCalories,
       mealType,
-      excludedFoodsSet,
+      foodsToExcludeForThisCall, // Pass the set of foods to exclude for this specific attempt
       3,
-      dynamicMaxAttempts // Dynamically increased max attempts
+      dynamicMaxAttempts
     );
 
     // Update recommendations state for just this meal
@@ -629,145 +640,47 @@ const FoodRecommendation = () => {
       heightNum,
       ageNum,
       formData.gender,
-      formData.activityLevel
+      formData.activityLevel // Pass the key e.g. "sedentary"
     );
     setIdealWeight(idealWeightRange);
     setCalorieNeeds(calorieNeedsValue);
 
     const [minIdealWeight, maxIdealWeight] = idealWeightRange
       .split(" - ")
-      .map((w) => parseFloat(w));
+      .map((w) => parseFloat(w.replace(" kg", ""))); // Pastikan " kg" dihapus
     let statusMessage = "";
     let adjustedCalories = calorieNeedsValue;
 
     if (weightNum < minIdealWeight) {
-      adjustedCalories += 500;
-      statusMessage = `Berat badan Anda kurang. Untuk mencapai berat ideal, tingkatkan asupan kalori harian Anda hingga ${adjustedCalories} kcal dan fokus pada makanan bergizi tinggi.`;
+      adjustedCalories += 500; // Penyesuaian untuk surplus
+      statusMessage = `Berat badan Anda kurang dari rentang ideal (${idealWeightRange}). Untuk membantu mencapai berat ideal, disarankan untuk meningkatkan asupan kalori harian Anda menjadi sekitar ${adjustedCalories} kcal dan fokus pada makanan bergizi tinggi.`;
     } else if (weightNum > maxIdealWeight) {
-      adjustedCalories -= 500;
-      statusMessage = `Berat badan Anda berlebih. Untuk mencapai berat ideal, kurangi asupan kalori harian menjadi sekitar ${adjustedCalories} kcal.`;
+      adjustedCalories -= 500; // Penyesuaian untuk defisit
+      statusMessage = `Berat badan Anda berlebih dari rentang ideal (${idealWeightRange}). Untuk membantu mencapai berat ideal, disarankan untuk mengurangi asupan kalori harian menjadi sekitar ${adjustedCalories} kcal.`;
     } else {
-      statusMessage = `Berat badan Anda sudah ideal. Pertahankan pola makan dan aktivitas fisik untuk menjaga kesehatan Anda.`;
+      statusMessage = `Berat badan Anda berada dalam rentang ideal (${idealWeightRange}). Pertahankan pola makan sehat dan aktivitas fisik untuk menjaga kesehatan Anda. Kebutuhan kalori harian Anda adalah ${calorieNeedsValue} kcal.`;
     }
+
 
     setSuccess(statusMessage);
 
     calculateDailyNutrientNeeds(
-      adjustedCalories,
+      adjustedCalories, // Gunakan kalori yang sudah disesuaikan
       weightNum,
       ageNum,
       formData.gender
     );
 
-    recommendFoods(adjustedCalories);
+    recommendFoods(adjustedCalories); // Gunakan kalori yang sudah disesuaikan
 
     setLoading(false);
   };
 
-  //* print state
   const printTemplateRef = useRef<HTMLDivElement>(null);
-  // useEffect(() => {
-  //   const fetchFoods = async () => {
-  //     const data = await readCSV("/foods.csv");
-  //     if (!data || data.length === 0) {
-  //       console.error("No foods loaded or empty data array");
-  //     } else {
-  //       console.log("Loaded foods sample:", data.slice(0, 3));
-  //     }
-  //     setFoods(data);
-  //   };
-  //   fetchFoods();
-  // }, []);
-  // Replace the html2pdf import with:
-
-  // Then update your handlePrintPDF function:
-  // Update the handlePrintPDF function
-
-  // const handlePrintPDF = () => {
-  //   if (!printTemplateRef.current) return;
-
-  //   // Show loading indicator
-  //   const loadingIndicator = document.createElement("div");
-  //   loadingIndicator.className =
-  //     "fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black/30 z-50";
-  //   loadingIndicator.innerHTML =
-  //     '<div class="bg-white p-4 rounded-lg">Menyiapkan PDF...</div>';
-  //   document.body.appendChild(loadingIndicator);
-
-  //   // Make the template temporarily visible but offscreen for better rendering
-  //   const template = printTemplateRef.current;
-  //   const originalStyle = template.style.display;
-  //   template.style.display = "block";
-
-  //   // Add a small delay to ensure the element is ready for capture
-  //   setTimeout(() => {
-  //     html2canvas(template, {
-  //       // scale: 2,
-  //       useCORS: true,
-  //       logging: false,
-  //       allowTaint: true,
-  //       backgroundColor: "white",
-  //       onclone: (clonedDoc) => {
-  //         // Additional preparation for the cloned document if needed
-  //         const clonedTemplate = clonedDoc.querySelector("#print-template");
-  //         if (clonedTemplate) {
-  //           (clonedTemplate as HTMLElement).style.display = "block";
-  //           (clonedTemplate as HTMLElement).style.visibility = "visible";
-  //         }
-  //       },
-  //     })
-  //       .then((canvas) => {
-  //         // Reset the template style
-  //         template.style.cssText = originalStyle;
-
-  //         const imgData = canvas.toDataURL("image/jpeg", 0.95);
-  //         const pdf = new jsPDF({
-  //           orientation: "portrait",
-  //           unit: "mm",
-  //           format: "a4",
-  //         });
-
-  //         const pageWidth = pdf.internal.pageSize.getWidth();
-  //         const pageHeight = pdf.internal.pageSize.getHeight();
-  //         const marginLeft = 6;
-  //         const marginTop = 10;
-  //         const contentWidth = pageWidth - marginLeft * 2;
-
-  //         // Maintain aspect ratio
-  //         const imgWidth = contentWidth;
-  //         const imgHeight = (canvas.height * contentWidth) / canvas.width;
-
-  //         let heightLeft = imgHeight;
-  //         let position = marginTop;
-
-  //         pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
-  //         heightLeft -= pageHeight;
-
-  //         while (heightLeft > 0) {
-  //           position = heightLeft - imgHeight;
-  //           pdf.addPage();
-  //           pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
-  //           heightLeft -= pageHeight;
-  //         }
-
-  //         pdf.save(
-  //           `rekomendasi_makanan_sehat_${new Date().toLocaleDateString()}.pdf`
-  //         );
-  //         document.body.removeChild(loadingIndicator);
-  //       })
-  //       .catch((error) => {
-  //         console.error("PDF generation error:", error);
-  //         template.style.cssText = originalStyle;
-  //         document.body.removeChild(loadingIndicator);
-  //         alert("Gagal membuat PDF. Silakan coba lagi.");
-  //       });
-  //   }, 200);
-  // };
 
   const handlePrintPDF = async () => {
     if (!printTemplateRef.current) return;
 
-    // Show loading indicator
     const loadingIndicator = document.createElement("div");
     loadingIndicator.className =
       "fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black/30 z-50";
@@ -776,65 +689,74 @@ const FoodRecommendation = () => {
     document.body.appendChild(loadingIndicator);
 
     try {
-      // Import jsPDF secara dinamis
       const jsPDFModule = await import("jspdf");
       const jsPDF = jsPDFModule.default;
 
-      // Make the template temporarily visible but offscreen for better rendering
       const template = printTemplateRef.current;
-      const originalStyle = template.style.display;
-      template.style.display = "block";
+      const originalDisplay = template.style.display;
+      const originalVisibility = template.style.visibility;
 
-      // Add a small delay to ensure the element is ready for capture
-      setTimeout(() => {
+      // Temporarily make the element visible and position it off-screen for rendering
+      template.style.display = "block";
+      template.style.visibility = "visible";
+      template.style.position = "absolute";
+      template.style.left = "-9999px";
+      template.style.top = "-9999px";
+
+
+      setTimeout(() => { // Ensure DOM updates before capturing
         html2canvas(template, {
+          scale: 2, // Increase scale for better quality
           useCORS: true,
           logging: false,
           allowTaint: true,
-          backgroundColor: "white",
-          onclone: (clonedDoc) => {
-            // Additional preparation for the cloned document if needed
+          backgroundColor: "#ffffff", // Explicit white background
+           onclone: (clonedDoc) => {
             const clonedTemplate = clonedDoc.querySelector("#print-template");
             if (clonedTemplate) {
               (clonedTemplate as HTMLElement).style.display = "block";
               (clonedTemplate as HTMLElement).style.visibility = "visible";
+              (clonedTemplate as HTMLElement).style.position = "static"; // Reset position for clone
             }
           },
         })
           .then((canvas) => {
-            // Reset the template style
-            template.style.cssText = originalStyle;
+            // Restore original styles
+            template.style.display = originalDisplay;
+            template.style.visibility = originalVisibility;
+            template.style.position = "static";
 
-            const imgData = canvas.toDataURL("image/jpeg", 0.95);
+
+            const imgData = canvas.toDataURL("image/jpeg", 0.92); // Use JPEG for potentially smaller size
             const pdf = new jsPDF({
               orientation: "portrait",
               unit: "mm",
               format: "a4",
             });
 
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
-            const marginLeft = 6;
-            const marginTop = 10;
-            const contentWidth = pageWidth - marginLeft * 2;
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+            const margin = 10; // Margin for all sides
+            const contentWidth = pdfWidth - margin * 2;
+            const contentHeight = pdfHeight - margin * 2;
 
-            // Maintain aspect ratio
-            const imgWidth = contentWidth;
-            const imgHeight = (canvas.height * contentWidth) / canvas.width;
+            const imgProps = pdf.getImageProperties(imgData);
+            const imgAspectRatio = imgProps.width / imgProps.height;
+            
+            let finalImgWidth = contentWidth;
+            let finalImgHeight = contentWidth / imgAspectRatio;
 
-            let heightLeft = imgHeight;
-            let position = marginTop;
-
-            pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-
-            while (heightLeft > 0) {
-              position = heightLeft - imgHeight;
-              pdf.addPage();
-              pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
-              heightLeft -= pageHeight;
+            if (finalImgHeight > contentHeight) {
+                finalImgHeight = contentHeight;
+                finalImgWidth = contentHeight * imgAspectRatio;
             }
+            
+            // Center the image
+            const x = (pdfWidth - finalImgWidth) / 2;
+            const y = (pdfHeight - finalImgHeight) / 2;
 
+
+            pdf.addImage(imgData, "JPEG", x, y, finalImgWidth, finalImgHeight);
             pdf.save(
               `rekomendasi_makanan_sehat_${new Date().toLocaleDateString()}.pdf`
             );
@@ -842,11 +764,13 @@ const FoodRecommendation = () => {
           })
           .catch((error) => {
             console.error("PDF generation error:", error);
-            template.style.cssText = originalStyle;
+             template.style.display = originalDisplay;
+            template.style.visibility = originalVisibility;
+            template.style.position = "static";
             document.body.removeChild(loadingIndicator);
             alert("Gagal membuat PDF. Silakan coba lagi.");
           });
-      }, 200);
+      }, 300); // Increased delay
     } catch (error) {
       console.error("Error importing jsPDF:", error);
       document.body.removeChild(loadingIndicator);
@@ -854,14 +778,14 @@ const FoodRecommendation = () => {
     }
   };
   const renderFoodTableRow = (food: Food, index: number) => (
-    <tr key={`food-row-${food.name}-${index}`}>
-      <td className="border p-2">{food.name}</td>
-      <td className="border p-2">{food.calories} kcal</td>
-      <td className="border p-2">{food.protein}g</td>
-      <td className="border p-2">{food.carbs}g</td>
-      <td className="border p-2">{food.fat}g</td>
-      <td className="border p-2">{food.sodium}mg</td>
-      <td className="border p-2">{food.porpotionSize}g</td>
+    <tr key={`food-row-${food.name}-${index}-${Math.random()}`}>
+      <td className="border p-2 text-gray-800">{food.name}</td>
+      <td className="border p-2 text-gray-800">{food.calories} kcal</td>
+      <td className="border p-2 text-gray-800">{food.protein}g</td>
+      <td className="border p-2 text-gray-800">{food.carbs}g</td>
+      <td className="border p-2 text-gray-800">{food.fat}g</td>
+      <td className="border p-2 text-gray-800">{food.sodium}mg</td>
+      <td className="border p-2 text-gray-800">{food.porpotionSize}g</td>
     </tr>
   );
   //* batas print state
@@ -898,13 +822,13 @@ const FoodRecommendation = () => {
       <div className="mt-2 bg-white rounded-lg p-4">
         <div className="flex justify-between items-center border-b border-[#00712D]/30 pb-2 mb-3">
           <h2 className="font-semibold text-sm lg:text-lg text-sky-500">
-            {mealTitle}
+            Menu {mealTitle}
           </h2>
           <button
             onClick={() => getNewMealRecommendations(mealType)}
             className="bg-gradient-to-r from-sky-800 to-blue-600 text-white py-1 px-4 text-[10px] lg:text-sm rounded-full font-medium hover:bg-[#c0e47a] transition-colors"
           >
-            Ganti Rekomendasi
+            Ganti Menu
           </button>
         </div>
 
@@ -914,31 +838,31 @@ const FoodRecommendation = () => {
         <div className="space-y-3">
           {foods.map((food, index) => (
             <div
-              key={index}
+              key={`${food.name}-${index}-${mealType}`}
               className="p-3 bg-gradient-to-r from-sky-800 to-blue-600 rounded-lg"
             >
-              <div className="font-bold mb-1">{food.name}</div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
+              <div className="font-bold mb-1 text-white">{food.name}</div>
+              <div className="grid grid-cols-2 gap-2 text-sm text-white">
+                <div className="bg-sky-700/50 p-2 rounded-lg">
                   <span className="font-semibold">Kalori:</span> {food.calories}{" "}
                   kcal
                 </div>
-                <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
+                <div className="bg-sky-700/50 p-2 rounded-lg">
                   <span className="font-semibold">Protein:</span> {food.protein}{" "}
                   g
                 </div>
-                <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
+                <div className="bg-sky-700/50 p-2 rounded-lg">
                   <span className="font-semibold">Lemak:</span> {food.fat} g
                 </div>
-                <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
+                <div className="bg-sky-700/50 p-2 rounded-lg">
                   <span className="font-semibold">Karbohidrat:</span>{" "}
                   {food.carbs} g
                 </div>
-                <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
+                <div className="bg-sky-700/50 p-2 rounded-lg">
                   <span className="font-semibold">Sodium:</span> {food.sodium}{" "}
                   mg
                 </div>
-                <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
+                <div className="bg-sky-700/50 p-2 rounded-lg">
                   <span className="font-semibold">Porsi:</span>{" "}
                   {food.porpotionSize || 100}g
                 </div>
@@ -955,11 +879,11 @@ const FoodRecommendation = () => {
             <div className="bg-gray-200 rounded-full h-2">
               <div
                 className={`h-2 rounded-full ${
-                  caloriePercentage <= 80
-                    ? "bg-green-600"
-                    : caloriePercentage <= 110
-                    ? "bg-blue-600"
-                    : "bg-red-500"
+                  caloriePercentage >= 90 && caloriePercentage <= 110
+                    ? "bg-green-500" // Good range
+                    : caloriePercentage < 90
+                    ? "bg-yellow-500" // Under
+                    : "bg-red-500" // Over
                 }`}
                 style={{ width: `${Math.min(caloriePercentage, 150)}%` }}
               ></div>
@@ -972,11 +896,11 @@ const FoodRecommendation = () => {
 
   return (
     <>
-      <div className="md:container mx-2 md:mx-auto p-6 text-white  bg-gradient-to-tr from-blue-500 to-green-500 mt-4 rounded-xl">
-        <h1 className="text-2xl font-bold mb-4">Rekomendasi Makanan Sehat</h1>
+      <div className="md:container mx-2 md:mx-auto p-6 text-white   bg-gradient-to-tr from-blue-500 to-green-500 mt-4 rounded-xl shadow-2xl">
+        <h1 className="text-2xl lg:text-3xl font-bold mb-6 text-center">Rekomendasi Makanan Sehat</h1>
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
-            <label className="block mb-2" htmlFor="weight">
+            <label className="block mb-1 font-medium" htmlFor="weight">
               Berat Badan (kg)
             </label>
             <input
@@ -985,13 +909,14 @@ const FoodRecommendation = () => {
               name="weight"
               value={formData.weight}
               onChange={handleInputChange}
-              className="text-[#0d1821] bg-white outline-[#0d1821] rounded-lg p-2 w-full"
+              className="text-[#0d1821] bg-white/90 focus:bg-white outline-none ring-2 ring-sky-300 focus:ring-sky-500 rounded-lg p-2.5 w-full placeholder-gray-400"
               required
+              placeholder="Contoh: 60"
             />
           </div>
 
           <div>
-            <label className="block mb-2" htmlFor="height">
+            <label className="block mb-1 font-medium" htmlFor="height">
               Tinggi Badan (cm)
             </label>
             <input
@@ -1000,13 +925,14 @@ const FoodRecommendation = () => {
               name="height"
               value={formData.height}
               onChange={handleInputChange}
-              className="text-[#0d1821] outline-[#0d1821] rounded-lg p-2 w-full"
+              className="text-[#0d1821] bg-white/90 focus:bg-white outline-none ring-2 ring-sky-300 focus:ring-sky-500 rounded-lg p-2.5 w-full placeholder-gray-400"
               required
+              placeholder="Contoh: 170"
             />
           </div>
 
           <div>
-            <label className="block mb-2" htmlFor="age">
+            <label className="block mb-1 font-medium" htmlFor="age">
               Usia (tahun)
             </label>
             <input
@@ -1015,13 +941,14 @@ const FoodRecommendation = () => {
               name="age"
               value={formData.age}
               onChange={handleInputChange}
-              className="text-[#0d1821] outline-[#0d1821] rounded-lg p-2 w-full"
+              className="text-[#0d1821] bg-white/90 focus:bg-white outline-none ring-2 ring-sky-300 focus:ring-sky-500 rounded-lg p-2.5 w-full placeholder-gray-400"
               required
+              placeholder="Contoh: 25"
             />
           </div>
 
           <div>
-            <label className="block mb-2" htmlFor="gender">
+            <label className="block mb-1 font-medium" htmlFor="gender">
               Jenis Kelamin
             </label>
             <select
@@ -1029,7 +956,7 @@ const FoodRecommendation = () => {
               name="gender"
               value={formData.gender}
               onChange={handleInputChange}
-              className="text-[#0d1821] outline-[#0d1821] rounded-lg p-2 w-full"
+              className="text-[#0d1821] bg-white/90 focus:bg-white outline-none ring-2 ring-sky-300 focus:ring-sky-500 rounded-lg p-2.5 w-full"
             >
               <option value="male">Laki-laki</option>
               <option value="female">Perempuan</option>
@@ -1037,17 +964,17 @@ const FoodRecommendation = () => {
           </div>
 
           <div>
-            <label className="block mb-2" htmlFor="activityLevel">
-              Tingkat Aktivitas
+            <label className="block mb-1 font-medium" htmlFor="activityLevel">
+              Tingkat Aktivitas Fisik
             </label>
             <select
               id="activityLevel"
               name="activityLevel"
               value={formData.activityLevel}
               onChange={handleInputChange}
-              className="text-[#0d1821] outline-[#0d1821] rounded-lg p-2 w-full"
+              className="text-[#0d1821] bg-white/90 focus:bg-white outline-none ring-2 ring-sky-300 focus:ring-sky-500 rounded-lg p-2.5 w-full"
             >
-              <option value="sedentary">Sedentary (Minim aktivitas)</option>
+              <option value="sedentary">Istirahat/Tidak Aktif (Sedentary)</option>
               <option value="light">
                 Ringan (Olahraga ringan 1-3 hari/minggu)
               </option>
@@ -1055,91 +982,92 @@ const FoodRecommendation = () => {
                 Sedang (Olahraga moderat 3-5 hari/minggu)
               </option>
               <option value="active">
-                Aktif (Olahraga intensif 6-7 hari/minggu)
+                Berat (Olahraga intensif 6-7 hari/minggu)
               </option>
             </select>
           </div>
 
           {error && (
-            <p className="absolute top-0 w-[80%] text-red-500 px-2 py-1 rounded-lg">
-              {error}
-            </p>
+            // Improved error message display
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative" role="alert">
+                <strong className="font-bold">Oops! </strong>
+                <span className="block sm:inline">{error}</span>
+            </div>
           )}
 
           <button
             type="submit"
-            className=" bg-transparent border-2 border-sky-200 font-semibold w-full text-white py-2 px-4 rounded"
+            className=" bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 font-semibold w-full text-white py-3 px-4 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 shadow-lg"
             disabled={loading}
           >
-            {loading ? "Loading..." : "Submit"}
+            {loading ? "Menghitung..." : "Dapatkan Rekomendasi"}
           </button>
         </form>
       </div>
       <div className="md:container mx-2 md:mx-auto mb-5 rounded-xl">
         {idealWeight && (
-          <div className=" mt-4  bg-gradient-to-br from-blue-500 to-green-500 text-white rounded-lg p-4 ">
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-sm lg:text-xl font-semibold">
-                Berat Badan IdealMu: {idealWeight}
+          <div className=" mt-6  bg-gradient-to-br from-blue-500 to-green-500 text-white rounded-xl p-6 shadow-2xl ">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+              <h2 className="text-xl lg:text-2xl font-semibold mb-2 sm:mb-0">
+                Hasil Analisis Kesehatan Anda
               </h2>
               <button
                 onClick={handlePrintPDF}
-                className="bg-white text-[10px]  lg:text-sm text-sky-500 py-1.5 px-2 lg:px-6 rounded-lg font-medium  transition-colors flex items-center"
+                className="bg-white text-xs lg:text-sm text-sky-600 hover:bg-sky-100 py-2 px-3 lg:px-5 rounded-lg font-medium  transition-colors flex items-center shadow hover:shadow-md"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-3.5 w-3.5 lg:h-4 lg:w-4 mr-2"
+                  className="h-4 w-4 lg:h-5 lg:w-5 mr-2"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
+                  strokeWidth={2}
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 8m4-4v12"
                   />
                 </svg>
                 Unduh PDF
               </button>
             </div>
-            {success && (
-              <div className="p-[3px] bg-gradient-to-r from-white to-sky-500 rounded-lg">
-                <p className="w-full bg-gradient-to-r from-sky-500 to-blue-800 text-transparent bg-clip-text px-2 py-1 rounded-md">
-                  Note: {success}
-                </p>
-              </div>
+             {success && (
+                <div className="mb-4 p-3 bg-white/20 rounded-lg text-sm">
+                    <p className="font-semibold">Catatan untuk Anda:</p>
+                    <p>{success}</p>
+                </div>
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-2">
-              <h3 className="mt-2">Kalori HarianMu: {calorieNeeds}kcal</h3>
-              <h3 className="mt-2">Protein HarianMu: {dailyProteinNeeds}g</h3>
-              <h3 className="mt-2">Gula HarianMu: {dailySugarNeeds}g</h3>
-              <h3 className="mt-2">Sodium HarianMu: {dailySodiumNeeds}g</h3>
-              <h3 className="mt-2">Karbohidrat HarianMu: {dailyCarbsNeeds}g</h3>
-              <h3 className="mt-2">
-                Batas Lemak Jenuh HarianMu: {saturedFatLimit}g
-              </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm mb-4">
+                <div className="bg-white/20 p-3 rounded-lg"><strong>Berat Badan Ideal:</strong> {idealWeight}</div>
+                <div className="bg-white/20 p-3 rounded-lg"><strong>Kalori Harian:</strong> {calorieNeeds} kcal</div>
+                <div className="bg-white/20 p-3 rounded-lg"><strong>Protein Harian:</strong> {dailyProteinNeeds} g</div>
+                <div className="bg-white/20 p-3 rounded-lg"><strong>Karbohidrat Harian:</strong> {dailyCarbsNeeds} g</div>
+                <div className="bg-white/20 p-3 rounded-lg"><strong>Batas Gula Harian:</strong> {dailySugarNeeds} g</div>
+                <div className="bg-white/20 p-3 rounded-lg"><strong>Batas Sodium Harian:</strong> {dailySodiumNeeds} mg</div>
+                <div className="bg-white/20 p-3 rounded-lg"><strong>Batas Lemak Jenuh:</strong> {saturedFatLimit} g</div>
             </div>
-            <div className="hidden lg:block mt-4">
-              <h3 className="text-xl font-semibold">
-                Pembagian Kalori Harian:
+
+            <div className="hidden lg:block mt-6">
+              <h3 className="text-xl font-semibold mb-3 text-center">
+                Target Kalori per Waktu Makan:
               </h3>
-              <ul className="mt-5 grid text-sky-500 font-semibold lg:grid-cols-3 justify-between text-center items-center ">
-                <li className="bg-white w-52 rounded-full py-1 translate-x-1/2">
+              <ul className="grid lg:grid-cols-3 gap-4 text-center items-center ">
+                <li className="bg-white text-sky-700 shadow-md rounded-lg py-3 px-2 font-semibold">
                   Sarapan: {breakfastCalories} kcal
                 </li>
-                <li className="bg-white w-52 rounded-full py-1 translate-x-1/2">
+                <li className="bg-white text-sky-700 shadow-md rounded-lg py-3 px-2 font-semibold">
                   Makan Siang: {lunchCalories} kcal
                 </li>
-                <li className="bg-white w-52 rounded-full py-1 translate-x-1/2">
+                <li className="bg-white text-sky-700 shadow-md rounded-lg py-3 px-2 font-semibold">
                   Makan Malam: {dinnerCalories} kcal
                 </li>
               </ul>
             </div>
-            <div className="grid lg:grid-cols-3 gap-4 mt-4">
+            <div className="grid lg:grid-cols-3 gap-4 mt-6">
               {/* Breakfast recommendation */}
               <div className="mt-4">
-                <h3 className="lg:hidden text-xl font-semibold">
+                <h3 className="lg:hidden text-xl font-semibold mb-2">
                   Rekomendasi Sarapan:
                 </h3>
                 {renderMealCard(recommendedFoods.breakfast, "breakfast")}
@@ -1147,7 +1075,7 @@ const FoodRecommendation = () => {
 
               {/* Lunch recommendation */}
               <div className="mt-4">
-                <h3 className="lg:hidden text-xl font-semibold">
+                <h3 className="lg:hidden text-xl font-semibold mb-2">
                   Rekomendasi Makan Siang:
                 </h3>
                 {renderMealCard(recommendedFoods.lunch, "lunch")}
@@ -1155,7 +1083,7 @@ const FoodRecommendation = () => {
 
               {/* Dinner recommendation */}
               <div className="mt-4">
-                <h3 className="lg:hidden text-xl font-semibold">
+                <h3 className="lg:hidden text-xl font-semibold mb-2">
                   Rekomendasi Makan Malam:
                 </h3>
                 {renderMealCard(recommendedFoods.dinner, "dinner")}
@@ -1164,93 +1092,79 @@ const FoodRecommendation = () => {
           </div>
         )}
 
-        {/* batas pdf       */}
-
+        {/* Print Template (Hidden) */}
         {idealWeight && (
           <div
             id="print-template"
             ref={printTemplateRef}
-            className="hidden bg-white"
+            className="hidden print-visible bg-white text-gray-800 p-4" // Ensure text is visible for printing
+            style={{ width: "210mm", minHeight: "297mm" }} // A4 size
           >
-            <div className="bg-white container justify-center items-center p-8 max-w-[1100px] mx-auto ">
-              <h1 className="text-center text-xl font-bold mb-4">
+            <div className="container mx-auto">
+              <h1 className="text-center text-xl font-bold mb-2 text-gray-900">
                 REKOMENDASI MAKANAN SEHAT
               </h1>
-              <p className="text-right text-sm mb-4">
-                Tanggal: {new Date().toLocaleDateString()}
+              <p className="text-right text-xs mb-3 text-gray-700">
+                Tanggal: {new Date().toLocaleDateString("id-ID", { day: '2-digit', month: 'long', year: 'numeric' })}
               </p>
 
-              <div className="mb-8">
-                <h2 className="text-lg font-bold mb-2">Informasi Kesehatan</h2>
-                <table className="w-full border-collapse border">
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold mb-1 border-b pb-1 text-gray-900">Informasi Kesehatan Pengguna</h2>
+                <table className="w-full text-xs border-collapse">
                   <tbody>
                     <tr>
-                      <td className="border p-2 font-semibold">
-                        Berat Badan Ideal:
-                      </td>
-                      <td className="border p-2">{idealWeight}</td>
+                      <td className="border p-1.5 font-medium text-gray-700">Berat Badan Ideal</td>
+                      <td className="border p-1.5 text-gray-800">{idealWeight}</td>
                     </tr>
                     {success && (
                       <tr>
-                        <td className="border p-2 font-semibold">Catatan:</td>
-                        <td className="border p-2">{success}</td>
+                        <td className="border p-1.5 font-medium text-gray-700">Catatan</td>
+                        <td className="border p-1.5 text-gray-800">{success.replace(/<\/?strong>/g, '')}</td>
                       </tr>
                     )}
                     <tr>
-                      <td className="border p-2 font-semibold">
-                        Kalori Harian:
-                      </td>
-                      <td className="border p-2">{calorieNeeds} kcal</td>
+                      <td className="border p-1.5 font-medium text-gray-700">Kebutuhan Kalori Harian</td>
+                      <td className="border p-1.5 text-gray-800">{calorieNeeds} kcal</td>
                     </tr>
                     <tr>
-                      <td className="border p-2 font-semibold">
-                        Protein Harian:
-                      </td>
-                      <td className="border p-2">{dailyProteinNeeds}g</td>
+                      <td className="border p-1.5 font-medium text-gray-700">Kebutuhan Protein Harian</td>
+                      <td className="border p-1.5 text-gray-800">{dailyProteinNeeds} g</td>
+                    </tr>
+                     <tr>
+                      <td className="border p-1.5 font-medium text-gray-700">Kebutuhan Karbohidrat Harian</td>
+                      <td className="border p-1.5 text-gray-800">{dailyCarbsNeeds} g</td>
                     </tr>
                     <tr>
-                      <td className="border p-2 font-semibold">
-                        Karbohidrat Harian:
-                      </td>
-                      <td className="border p-2">{dailyCarbsNeeds}g</td>
+                      <td className="border p-1.5 font-medium text-gray-700">Batas Asupan Gula Harian</td>
+                      <td className="border p-1.5 text-gray-800">{dailySugarNeeds} g</td>
                     </tr>
                     <tr>
-                      <td className="border p-2 font-semibold">
-                        Batas Gula Harian:
-                      </td>
-                      <td className="border p-2">{dailySugarNeeds}g</td>
+                      <td className="border p-1.5 font-medium text-gray-700">Batas Asupan Sodium Harian</td>
+                      <td className="border p-1.5 text-gray-800">{dailySodiumNeeds} mg</td>
                     </tr>
                     <tr>
-                      <td className="border p-2 font-semibold">
-                        Batas Sodium Harian:
-                      </td>
-                      <td className="border p-2">{dailySodiumNeeds}g</td>
-                    </tr>
-                    <tr>
-                      <td className="border p-2 font-semibold">
-                        Batas Lemak Jenuh:
-                      </td>
-                      <td className="border p-2">{saturedFatLimit}g</td>
+                      <td className="border p-1.5 font-medium text-gray-700">Batas Asupan Lemak Jenuh</td>
+                      <td className="border p-1.5 text-gray-800">{saturedFatLimit} g</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
 
               {/* Breakfast table */}
-              <div className="mb-6">
-                <h3 className="text-lg font-bold mb-2">
-                  Rekomendasi Sarapan ({breakfastCalories} kcal)
+              <div className="mb-3">
+                <h3 className="text-md font-semibold mb-1 border-b pb-1 text-gray-900">
+                  Rekomendasi Sarapan (Target: {breakfastCalories} kcal)
                 </h3>
-                <table className="w-full border-collapse border text-sm">
+                <table className="w-full border-collapse border text-xs">
                   <thead>
-                    <tr className="bg-gray-100">
-                      <th className="border p-2">Nama Makanan</th>
-                      <th className="border p-2">Kalori</th>
-                      <th className="border p-2">Protein</th>
-                      <th className="border p-2">Karbo</th>
-                      <th className="border p-2">Lemak</th>
-                      <th className="border p-2">Sodium</th>
-                      <th className="border p-2">Porsi</th>
+                    <tr className="bg-gray-100 text-gray-700">
+                      <th className="border p-1.5">Nama Makanan</th>
+                      <th className="border p-1.5">Kalori</th>
+                      <th className="border p-1.5">Protein</th>
+                      <th className="border p-1.5">Karbo</th>
+                      <th className="border p-1.5">Lemak</th>
+                      <th className="border p-1.5">Sodium</th>
+                      <th className="border p-1.5">Porsi</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1262,20 +1176,20 @@ const FoodRecommendation = () => {
               </div>
 
               {/* Lunch table */}
-              <div className="mb-6">
-                <h3 className="text-lg font-bold mb-2">
-                  Rekomendasi Makan Siang ({lunchCalories} kcal)
+              <div className="mb-3">
+                <h3 className="text-md font-semibold mb-1 border-b pb-1 text-gray-900">
+                  Rekomendasi Makan Siang (Target: {lunchCalories} kcal)
                 </h3>
-                <table className="w-full border-collapse border text-sm">
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="border p-2">Nama Makanan</th>
-                      <th className="border p-2">Kalori</th>
-                      <th className="border p-2">Protein</th>
-                      <th className="border p-2">Karbo</th>
-                      <th className="border p-2">Lemak</th>
-                      <th className="border p-2">Sodium</th>
-                      <th className="border p-2">Porsi</th>
+                <table className="w-full border-collapse border text-xs">
+                   <thead>
+                    <tr className="bg-gray-100 text-gray-700">
+                      <th className="border p-1.5">Nama Makanan</th>
+                      <th className="border p-1.5">Kalori</th>
+                      <th className="border p-1.5">Protein</th>
+                      <th className="border p-1.5">Karbo</th>
+                      <th className="border p-1.5">Lemak</th>
+                      <th className="border p-1.5">Sodium</th>
+                      <th className="border p-1.5">Porsi</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1287,20 +1201,20 @@ const FoodRecommendation = () => {
               </div>
 
               {/* Dinner table */}
-              <div className="mb-6">
-                <h3 className="text-lg font-bold mb-2">
-                  Rekomendasi Makan Malam ({dinnerCalories} kcal)
+              <div className="mb-3">
+                <h3 className="text-md font-semibold mb-1 border-b pb-1 text-gray-900">
+                  Rekomendasi Makan Malam (Target: {dinnerCalories} kcal)
                 </h3>
-                <table className="w-full border-collapse border text-sm">
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="border p-2">Nama Makanan</th>
-                      <th className="border p-2">Kalori</th>
-                      <th className="border p-2">Protein</th>
-                      <th className="border p-2">Karbo</th>
-                      <th className="border p-2">Lemak</th>
-                      <th className="border p-2">Sodium</th>
-                      <th className="border p-2">Porsi</th>
+                <table className="w-full border-collapse border text-xs">
+                   <thead>
+                    <tr className="bg-gray-100 text-gray-700">
+                      <th className="border p-1.5">Nama Makanan</th>
+                      <th className="border p-1.5">Kalori</th>
+                      <th className="border p-1.5">Protein</th>
+                      <th className="border p-1.5">Karbo</th>
+                      <th className="border p-1.5">Lemak</th>
+                      <th className="border p-1.5">Sodium</th>
+                      <th className="border p-1.5">Porsi</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1311,14 +1225,16 @@ const FoodRecommendation = () => {
                 </table>
               </div>
 
-              <div className="text-center text-xs mt-8 pt-4 border-t">
+              <div className="text-center text-[8px] mt-4 pt-2 border-t text-gray-600">
                 <p>
-                  Rekomendasi ini dibuat berdasarkan perhitungan kebutuhan
-                  kalori dan nutrisi harian.
+                  Rekomendasi ini dibuat berdasarkan perhitungan estimasi kebutuhan
+                  kalori dan nutrisi harian Anda.
                 </p>
                 <p>
-                  Konsultasikan dengan ahli gizi profesional untuk rekomendasi
-                  yang lebih spesifik.
+                  Untuk saran yang lebih personal dan akurat, silakan konsultasikan dengan ahli gizi atau tenaga kesehatan profesional.
+                </p>
+                 <p className="mt-2">
+                  Dihasilkan oleh Sistem Rekomendasi Makanan Sehat | Kontak: farhanmaulanapangestu@gmail.com
                 </p>
               </div>
             </div>
@@ -1330,3 +1246,4 @@ const FoodRecommendation = () => {
 };
 
 export default FoodRecommendation;
+

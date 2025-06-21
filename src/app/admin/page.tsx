@@ -186,7 +186,7 @@ export default function AdminPage() {
 
         // Tambahkan timestamp untuk mencegah cache
         const timestamp = new Date().getTime();
-        const response = await fetch(`/api/foods?t=${timestamp}`);
+        const response = await fetch(`/api/fods?t=${timestamp}`);
 
         if (!response.ok) throw new Error("Failed to fetch foods");
 
@@ -218,25 +218,25 @@ export default function AdminPage() {
     fetchFoods();
   }, []);
 
-  const handleDelete = async (foodName: string) => {
-    if (!confirm("Are you sure you want to delete this food?")) return;
+  // const handleDelete = async (foodName: string) => {
+  //   if (!confirm("Are you sure you want to delete this food?")) return;
 
-    try {
-      const response = await fetch(
-        `/api/foods/${encodeURIComponent(foodName)}`,
-        {
-          method: "DELETE",
-        }
-      );
+  //   // try {
+  //   //   const response = await fetch(
+  //   //     `/api/foods/${encodeURIComponent(foodName)}`,
+  //   //     {
+  //   //       method: "DELETE",
+  //   //     }
+  //   //   );
 
-      if (!response.ok) throw new Error("Failed to delete food");
+  //   //   if (!response.ok) throw new Error("Failed to delete food");
 
-      setFoods(foods.filter((food) => food.name !== foodName));
-    } catch (err) {
-      alert("Error deleting food");
-      console.error(err);
-    }
-  };
+  //   //   setFoods(foods.filter((food) => food.name !== foodName));
+  //   // } catch (err) {
+  //   //   alert("Error deleting food");
+  //   //   console.error(err);
+  //   // }
+  // };
 
   if (loading)
     return (
@@ -266,11 +266,7 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <FoodList
-        foods={foods || lastFetched}
-        setFoods={setFoods}
-        handleDelete={handleDelete}
-      />
+      <FoodList initialFoods={foods || lastFetched} />
     </div>
   );
 }
