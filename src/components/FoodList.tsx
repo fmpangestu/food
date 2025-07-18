@@ -1,6 +1,5 @@
 "use client";
 
-
 import { useEffect, useRef, useState } from "react";
 
 import Link from "next/link";
@@ -51,8 +50,6 @@ export default function FoodList({ initialFoods }: FoodListProps) {
     food.Menu.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-
-
   const openDeleteConfirmation = (foodName: string) => {
     setFoodToDelete(foodName);
     setIsAlertOpen(true);
@@ -62,7 +59,7 @@ export default function FoodList({ initialFoods }: FoodListProps) {
     if (!foodToDelete) return;
     setIsDeleting(true);
     try {
-      const url = `/api/fods/${encodeURIComponent(foodToDelete)}`;
+      const url = `/api/foods/${encodeURIComponent(foodToDelete)}`;
       const response = await fetch(url, { method: "DELETE" });
       const data = await response.json();
       if (!response.ok) {
@@ -174,12 +171,10 @@ export default function FoodList({ initialFoods }: FoodListProps) {
             ) : (
               // Ini adalah cara yang BENAR untuk menampilkan pesan "kosong"
               <tr>
-
                 <td colSpan={9} className="border p-4 text-center">
                   {searchTerm
                     ? "Tidak ada makanan yang cocok"
                     : "Tidak ada makanan tersedia"}
-
                 </td>
               </tr>
             )}

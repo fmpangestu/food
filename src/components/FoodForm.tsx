@@ -16,6 +16,10 @@ type FormDisplayState = {
 
 interface FoodFormProps {
   initialData?: Food | null;
+  onSubmit?: (data: Food) => Promise<void>;
+  isSubmitting?: boolean;
+  submitText?: string;
+  onCancel?: () => void;
 }
 
 export default function FoodForm({ initialData }: FoodFormProps) {
@@ -70,10 +74,10 @@ export default function FoodForm({ initialData }: FoodFormProps) {
     // Pastikan kita menggunakan nama 'Menu' dari data yang diedit
     const foodIdentifier = initialData?.Menu || formData.Menu;
 
-    // Perbaikan: Gunakan endpoint /api/fods/
+    // Perbaikan: Gunakan endpoint /api/foods/
     const url = isEditMode
-      ? `/api/fods/${encodeURIComponent(foodIdentifier)}`
-      : "/api/fods";
+      ? `/api/foods/${encodeURIComponent(foodIdentifier)}`
+      : "/api/foods";
 
     const method = isEditMode ? "PUT" : "POST";
 

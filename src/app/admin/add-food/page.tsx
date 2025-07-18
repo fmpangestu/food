@@ -15,7 +15,7 @@ export default function AddFoodPage() {
     setError(null);
 
     try {
-      const response = await fetch("/api/fods", {
+      const response = await fetch("/api/foods", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

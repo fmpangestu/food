@@ -23,13 +23,13 @@
     }
   },
   "include": [
-    "global.d.ts",
-    "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts",
+    "global.d.ts",
+    "next-env.d.ts",
+    "next.config.js",
     "seedFood.js",
-    "next.config.js"
+    ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", ".next/types"]
 }

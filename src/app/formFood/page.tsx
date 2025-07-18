@@ -111,7 +111,7 @@ const FoodRecommendation = () => {
   useEffect(() => {
     const fetchFoods = async () => {
       try {
-        const response = await fetch("/api/fods");
+        const response = await fetch("/api/foods");
         if (!response.ok)
           throw new Error("Gagal mengambil data makanan dari server.");
         const dataFromMongo = await response.json();

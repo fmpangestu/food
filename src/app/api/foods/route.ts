@@ -1,144 +1,72 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { NextRequest, NextResponse } from "next/server";
-// import { readCSV } from "@/lib/csvReader";
-// import { addFood } from "@/lib/csvWriter";
-import {
-  readCsvFromServer,
-  addFoodToServer,
-  deleteFoodFromServer,
-} from "@/lib/serverCsvHandler";
-import { readFoods, addFood } from "@/lib/kvHandler";
-// export async function GET() {
-//   try {
-//     const foods = await readCSV("/foods.csv");
-//     return NextResponse.json(foods);
-//   } catch (error) {
-//     return NextResponse.json(
-//       { error: "Failed to fetch foods" },
-//       { status: 500 }
-//     );
-//   }
-// }
-
-// export async function POST(request: NextRequest) {
-//   try {
-//     const newFood = await request.json();
-
-//     // Validate food data
-//     if (!newFood.name || !newFood.calories) {
-//       return NextResponse.json(
-//         { error: "Name and calories are required" },
-//         { status: 400 }
-//       );
-//     }
-
-//     const success = await addFood(newFood);
-
-//     if (success) {
-//       return NextResponse.json({ success: true, food: newFood });
-//     } else {
-//       return NextResponse.json(
-//         { error: "Food with this name already exists" },
-//         { status: 409 }
-//       );
-//     }
-//   } catch (error) {
-//     return NextResponse.json({ error: "Failed to add food" }, { status: 500 });
-//   }
-// }
-
-// export async function GET() {
-//   try {
-//     console.log("API: Reading foods from server CSV");
-//     const foods = await readFoods();
-//     console.log(`API: Found ${foods.length} foods`);
-//     return NextResponse.json(foods);
-//   } catch (error) {
-//     console.error("API GET error:", error);
-//     return NextResponse.json(
-//       { error: "Failed to fetch foods" },
-//       { status: 500 }
-//     );
-//   }
-// }
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { NextResponse, NextRequest } from "next/server";
+import clientPromise from "../../../lib/mongodb_atlas";
+import { Food } from "../../../types/food"; // Impor tipe Food
 
 export async function GET() {
   try {
-    console.log("API: Mengambil data makanan dari KV database");
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB);
 
-    // Panggil readFoods() dengan error handling lebih detail
-    let foods;
-    try {
-      foods = await readFoods();
-      console.log("Data type dari readFoods():", typeof foods);
-      console.log("Apakah array:", Array.isArray(foods));
-    } catch (readError) {
-      console.error("Error dalam readFoods():", readError);
-      throw new Error(`readFoods() failed: ${readError}`);
-    }
+    const foods = await db.collection<Food>("foods").find({}).toArray();
 
-    // Validasi data sebelum mengembalikan response
-    const validFoods = Array.isArray(foods) ? foods : [];
-
-    console.log(`API: Ditemukan ${validFoods.length} makanan`);
-    return NextResponse.json(validFoods);
-  } catch (error) {
-    // Error handling...
+    return NextResponse.json(foods, { status: 200 });
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json(
+      { error: "Failed to fetch foods" },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const newFood = await request.json();
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB);
+    const newFood: Food = await request.json();
 
-    // Validate food data
-    if (!newFood.name || !newFood.calories) {
+    if (!("kategori" in newFood)) {
+      newFood.kategori = "";
+    }
+    // Validasi sederhana
+    if (!newFood.Menu || typeof newFood.Menu !== "string") {
       return NextResponse.json(
-        { error: "Name and calories are required" },
+        { error: "Food name ('Menu') is required and must be a string." },
         { status: 400 }
       );
     }
 
-    console.log("API: Adding new food:", newFood.name);
-    const success = await addFood(newFood);
-
-    if (success) {
-      return NextResponse.json({ success: true, food: newFood });
-    } else {
+    // Cek duplikasi
+    const existingFood = await db
+      .collection<Food>("foods")
+      .findOne({ Menu: newFood.Menu });
+    if (existingFood) {
       return NextResponse.json(
-        { error: "Food with this name already exists" },
+        { error: `Food with name "${newFood.Menu}" already exists.` },
         { status: 409 }
-      );
+      ); // 409 Conflict
     }
-  } catch (error) {
-    console.error("API POST error:", error);
+
+    // Remove _id if it exists and is not a valid ObjectId
+    if (
+      "_id" in newFood &&
+      (typeof newFood._id !== "object" ||
+        newFood._id === undefined ||
+        (newFood._id && typeof newFood._id === "string"))
+    ) {
+      delete (newFood as any)._id;
+    }
+
+    const result = await db
+      .collection("foods")
+      .insertOne(newFood as Omit<Food, "_id">);
+    return NextResponse.json(
+      { message: "Food added successfully", insertedId: result.insertedId },
+      { status: 201 }
+    );
+  } catch (e) {
+    console.error(e);
     return NextResponse.json({ error: "Failed to add food" }, { status: 500 });
   }
 }
-// export async function DELETE(
-//   request: NextRequest,
-//   { params }: { params: { id: string } }
-// ) {
-//   try {
-//     const id = decodeURIComponent(params.id);
-
-//     console.log(`API: Mencoba menghapus makanan dengan id ${id}`);
-//     const success = await deleteFoodFromServer(id);
-
-//     if (success) {
-//       return NextResponse.json({ success: true });
-//     } else {
-//       console.error(`Makanan dengan nama '${id}' tidak ditemukan`);
-//       return NextResponse.json(
-//         { error: "Makanan tidak ditemukan" },
-//         { status: 404 }
-//       );
-//     }
-//   } catch (error) {
-//     console.error("API DELETE error:", error);
-//     return NextResponse.json(
-//       { error: `Gagal menghapus makanan: ${(error as Error).message}` },
-//       { status: 500 }
-//     );
-//   }
-// }
