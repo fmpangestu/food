@@ -1,87 +1,107 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { NextAuthOptions } from "next-auth";
+import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-
-// Daftar admin yang diotorisasi
+import clientPromise from "@/lib/mongodb_atlas"; // Pastikan path ini benar
+import bcrypt from "bcryptjs";
 const ADMINS = [
   {
     email: "admin@gmail.com",
-    password: "sukasehat", // Gunakan bcrypt di aplikasi produksi
+    password: "sukasehat", // Untuk produksi, gunakan hash atau variabel env
     name: "Admin",
+    role: "admin",
   },
 ];
 
 export const authOptions: NextAuthOptions = {
-  debug: true, // Aktifkan debugger untuk melihat lebih banyak detail error
-  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
-      id: "credentials", // Tambahkan ID eksplisit
       name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          console.log("Missing credentials");
-          return null;
+      credentials: {},
+      async authorize(credentials: any) {
+        if (!credentials?.loginType) {
+          throw new Error("Tipe login tidak ditemukan.");
         }
 
-        console.log("Attempting login with:", credentials.email);
-        console.log("Password provided length:", credentials.password.length);
+        // --- Logika untuk Login Admin (statis, sesuai cara Anda) ---
+        if (credentials.loginType === "admin") {
+          const adminUser = ADMINS.find(
+            (admin) =>
+              admin.email.toLowerCase() === credentials.email.toLowerCase()
+          );
 
-        // Cek kredensial dengan case insensitive untuk email
-        const user = ADMINS.find(
-          (user) => user.email.toLowerCase() === credentials.email.toLowerCase()
-        );
-
-        if (user) {
-          console.log("User found:", user.email);
-          // Perbandingan password yang lebih aman
-          if (user.password === credentials.password) {
-            console.log("Login successful for:", user.email);
+          if (adminUser && adminUser.password === credentials.password) {
+            // Jika kredensial admin cocok, kembalikan objek admin
             return {
-              id: user.email,
-              name: user.name,
-              email: user.email,
-              role: "admin",
+              id: adminUser.email,
+              name: adminUser.name,
+              email: adminUser.email,
+              role: adminUser.role,
             };
-          } else {
-            console.log("Password incorrect for:", user.email);
           }
-        } else {
-          console.log("User not found with email:", credentials.email);
+          // Jika login admin gagal, lempar error
+          throw new Error("Email atau password Admin salah.");
         }
 
+        // --- Logika untuk Login User Biasa (dari database) ---
+        if (credentials.loginType === "user") {
+          if (!credentials.username || !credentials.password) {
+            throw new Error("Username dan password diperlukan.");
+          }
+          const client = await clientPromise;
+          const db = client.db(process.env.MONGODB_DB);
+
+          const user = await db
+            .collection("users")
+            .findOne({ username: credentials.username });
+          if (!user) {
+            throw new Error("Username tidak ditemukan.");
+          }
+          const isPasswordMatch = await bcrypt.compare(
+            credentials.password,
+            user.password
+          );
+          if (!isPasswordMatch) {
+            throw new Error("Password salah.");
+          }
+          // Jika berhasil, kembalikan objek user
+          return {
+            id: user._id.toString(),
+            name: user.username,
+            email: null,
+            role: user.role || "user",
+          };
+        }
+
+        // Jika tipe login tidak dikenali
         return null;
       },
     }),
   ],
+  session: {
+    strategy: "jwt",
+  },
+  secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
-    async jwt({ token, user }: { token: any; user?: any }) {
+    // Callback ini akan dijalankan untuk menambahkan 'role' ke dalam token JWT
+    async jwt({ token, user }) {
       if (user) {
         token.role = user.role;
-        token.name = user.name;
-        token.email = user.email;
+        token.id = user.id;
       }
       return token;
     },
-    async session({ session, token }: { session: any; token: any }) {
+    // Callback ini akan dijalankan untuk menambahkan 'role' ke data sesi
+    async session({ session, token }) {
       if (session?.user) {
         session.user.role = token.role;
-        session.user.name = token.name;
-        session.user.email = token.email;
+
+        session.user.id = token.id;
       }
       return session;
     },
   },
   pages: {
-    signIn: "/login",
-    error: "/login",
-  },
-  session: {
-    strategy: "jwt",
-    maxAge: 24 * 60 * 60, // 1 hari
+    signIn: "/", // Halaman login user
+    error: "/", // Halaman jika terjadi error autentikasi
   },
 };

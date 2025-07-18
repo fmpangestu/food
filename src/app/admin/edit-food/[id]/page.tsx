@@ -211,35 +211,33 @@
 //     </div>
 //   );
 // }
-
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import FoodForm from "@/components/FoodForm";
 import { Food } from "@/types/food";
 
 export default function EditFoodPage() {
-  const router = useRouter();
   const params = useParams();
+  // Gunakan 'id' sesuai nama folder Anda [id]
   const foodId = decodeURIComponent(params.id as string);
 
   const [food, setFood] = useState<Food | null>(null);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!foodId) return;
+
     const fetchFood = async () => {
       try {
-        const response = await fetch(
-          `/api/foods/${encodeURIComponent(foodId)}`
-        );
+        // Perbaikan: Gunakan endpoint /api/fods/
+        const response = await fetch(`/api/fods/${encodeURIComponent(foodId)}`);
 
         if (!response.ok) {
-          throw new Error("Food not found");
+          throw new Error("Data makanan tidak ditemukan");
         }
-
         const fetchedFood = await response.json();
         setFood(fetchedFood);
       } catch (err) {
@@ -250,61 +248,42 @@ export default function EditFoodPage() {
     };
 
     fetchFood();
-  }, [foodId]);
+  }, [foodId]); // Dependency array sudah benar
 
-  const handleSubmit = async (formData: Food) => {
-    setSubmitting(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`/api/foods/${encodeURIComponent(foodId)}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to update food");
-      }
-
-      router.push("/admin");
-    } catch (err) {
-      setError((err as Error).message);
-      setSubmitting(false);
-    }
-  };
-
-  if (loading)
+  // Tampilan loading, error, dan "not found"
+  if (loading) {
     return (
-      <div className="p-8  text-[#00712D] items-center justify-center flex h-screen">
-        Loading food data...
+      <div className="p-8 text-[#00712D] items-center justify-center flex h-screen">
+        Memuat data makanan...
       </div>
     );
-  if (error && !submitting)
-    return <div className="p-8 text-red-500">{error}</div>;
-  if (!food) return <div className="p-8 text-red-500">Food not found</div>;
+  }
 
+  if (error) {
+    return <div className="p-8 text-center text-red-500">Error: {error}</div>;
+  }
+
+  if (!food) {
+    return (
+      <div className="p-8 text-center text-red-500">
+        Data makanan tidak ditemukan.
+      </div>
+    );
+  }
+
+  // Halaman hanya perlu merender FoodForm dengan data awal
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Edit Food: {foodId}</h1>
+    <div className="px-4 py-2 mt-5 max-w-2xl mx-auto bg-white rounded-md shadow-[0px_2px_6px_0.1px_#a0aec0]">
+      <h1 className="text-2xl italic text-gray-500 font-bold mb-6">
+        Edit Makanan <span className="text-green-600">{food.Menu}</span>
+      </h1>
 
-      {error && submitting && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
-
-      <FoodForm
-        initialData={food}
-        onSubmit={handleSubmit}
-        isSubmitting={submitting}
-        submitText="Update Food"
-        onCancel={() => router.push("/admin")}
-      />
+      {/* INI BAGIAN KUNCINYA:
+        Kita hanya perlu memberikan initialData. 
+        Tidak perlu lagi onSubmit, isSubmitting, onCancel, dll.
+        karena semua itu sudah diurus di dalam FoodForm.
+      */}
+      <FoodForm initialData={food} />
     </div>
   );
 }

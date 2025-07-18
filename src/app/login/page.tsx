@@ -1,19 +1,33 @@
+// FILE: app/login/page.tsx (Untuk Admin)
+
 "use client";
 
-import { useState, Suspense } from "react";
-import { signIn } from "next-auth/react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
+import Image from "next/image";
 
-function LoginForm() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+export default function AdminLoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/admin";
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Efek untuk menampilkan pesan error dari middleware
+  useEffect(() => {
+    const errorMessage = searchParams.get("error");
+    if (errorMessage) {
+      setError(errorMessage);
+      toast.error(errorMessage);
+      // Hapus parameter error dari URL agar tidak muncul terus
+      router.replace("/login");
+    }
+  }, [searchParams, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,43 +35,49 @@ function LoginForm() {
     setError("");
 
     try {
+      // --- PERBAIKAN UTAMA DI SINI ---
+      // Kita biarkan NextAuth yang menangani redirect
       const result = await signIn("credentials", {
-        redirect: false,
-        email,
-        password,
+        // Hapus 'redirect: false' agar NextAuth melakukan redirect otomatis
+        email: email,
+        password: password,
+        loginType: "admin",
+        callbackUrl: "/admin",
       });
 
+      // Kode di bawah ini hanya akan berjalan jika terjadi error
       if (result?.error) {
-        setError(`Login failed: ${result.error}`);
-      } else if (result?.ok) {
-        router.push(callbackUrl);
-        router.refresh();
-      } else {
-        setError("An unexpected error occurred");
+        throw new Error(result.error);
       }
+      // Kita tidak perlu lagi router.push atau window.location.href di sini
     } catch (err) {
-      setError(
-        `Error: ${err instanceof Error ? err.message : "Unknown error"}`
-      );
-    } finally {
+      const errorMessage =
+        err instanceof Error ? err.message : "Terjadi kesalahan";
+      setError(errorMessage);
+      toast.error(errorMessage);
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow">
+    <main className="flex flex-col md:flex-row gap-10 items-center justify-center min-h-screen bg-gray-100 mx-5 md:mx-0">
+      <div className="hidden md:block w-full max-w-md">
+        <Image
+          src="/admin.svg"
+          alt="Logo"
+          width={400}
+          height={400}
+          className="mx-auto"
+        />
+      </div>
+      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-[0px_2px_8px_0.1px_#a0aec0]">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-green-600">Admin Login</h1>
-          <p className="mt-2 text-gray-600">
-            Masuk untuk mengelola data makanan
-          </p>
+          <p className="mt-2 text-gray-600">Masuk untuk mengelola data.</p>
         </div>
-
         {error && (
           <div className="p-3 bg-red-100 text-red-700 rounded-md">{error}</div>
         )}
-
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label
@@ -68,7 +88,6 @@ function LoginForm() {
             </label>
             <input
               id="email"
-              name="email"
               type="email"
               required
               value={email}
@@ -76,7 +95,6 @@ function LoginForm() {
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
             />
           </div>
-
           <div>
             <label
               htmlFor="password"
@@ -87,7 +105,6 @@ function LoginForm() {
             <div className="relative mt-1">
               <input
                 id="password"
-                name="password"
                 type={showPassword ? "text" : "password"}
                 required
                 value={password}
@@ -96,38 +113,28 @@ function LoginForm() {
               />
               <button
                 type="button"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-green-600"
                 onClick={() => setShowPassword(!showPassword)}
-                tabIndex={-1}
               >
                 {showPassword ? (
-                  <EyeOff className="h-5 w-5" aria-hidden="true" />
+                  <EyeOff className="h-5 w-5" />
                 ) : (
-                  <Eye className="h-5 w-5" aria-hidden="true" />
+                  <Eye className="h-5 w-5" />
                 )}
               </button>
             </div>
           </div>
-
           <div>
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+              className="w-full flex justify-center py-2 px-4 rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
             >
               {isLoading ? "Memuat..." : "Masuk"}
             </button>
           </div>
         </form>
       </div>
-    </div>
-  );
-}
-
-export default function LoginPage() {
-  return (
-    <Suspense fallback={<p>Loading...</p>}>
-      <LoginForm />
-    </Suspense>
+    </main>
   );
 }

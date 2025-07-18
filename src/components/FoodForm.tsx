@@ -1,500 +1,182 @@
-// "use client";
-
-// import { useState, useEffect } from "react";
-// import { Food } from "../types/food";
-
-// interface FoodFormProps {
-//   initialData?: Food;
-//   onSubmit: (data: Food) => Promise<void>;
-//   isSubmitting: boolean;
-//   submitText: string;
-//   onCancel: () => void;
-// }
-
-// export default function FoodForm({
-//   initialData,
-//   onSubmit,
-//   isSubmitting,
-//   submitText,
-//   onCancel,
-// }: FoodFormProps) {
-//   const [formData, setFormData] = useState<Food>({
-//     name: "",
-//     calories: 0,
-//     protein: 0,
-//     fat: 0,
-//     carbs: 0,
-//     sodium: 0,
-//     porpotionSize: 100,
-
-//   });
-
-//   // Load initial data if provided (for editing)
-//   useEffect(() => {
-//     if (initialData) {
-//       setFormData(initialData);
-//     }
-//   }, [initialData]);
-
-//   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     const { name, value } = e.target;
-//     setFormData({
-//       ...formData,
-//       [name]: name === "name" ? value : parseFloat(value) || 0,
-//     });
-//   };
-
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-//     await onSubmit(formData);
-//   };
-
-//   return (
-//     <form onSubmit={handleSubmit} className="space-y-4">
-//       <div>
-//         <label className="block mb-1">Name</label>
-//         <input
-//           type="text"
-//           name="name"
-//           value={formData.name}
-//           onChange={handleChange}
-//           className="w-full p-2 border rounded-md"
-//           required
-//         />
-//       </div>
-
-//       <div>
-//         <label className="block mb-1">Calories</label>
-//         <input
-//           type="number"
-//           name="calories"
-//           value={formData.calories}
-//           onChange={handleChange}
-//           className="w-full p-2 border rounded-md"
-//           required
-//         />
-//       </div>
-
-//       <div>
-//         <label className="block mb-1">Protein (g)</label>
-//         <input
-//           type="number"
-//           name="protein"
-//           value={formData.protein}
-//           onChange={handleChange}
-//           className="w-full p-2 border rounded-md"
-//           step="0.1"
-//           required
-//         />
-//       </div>
-
-//       <div>
-//         <label className="block mb-1">Fat (g)</label>
-//         <input
-//           type="number"
-//           name="fat"
-//           value={formData.fat}
-//           onChange={handleChange}
-//           className="w-full p-2 border rounded-md"
-//           step="0.1"
-//           required
-//         />
-//       </div>
-
-//       <div>
-//         <label className="block mb-1">Carbs (g)</label>
-//         <input
-//           type="number"
-//           name="carbs"
-//           value={formData.carbs}
-//           onChange={handleChange}
-//           className="w-full p-2 border rounded-md"
-//           step="0.1"
-//           required
-//         />
-//       </div>
-
-//       <div>
-//         <label className="block mb-1">Sodium (mg)</label>
-//         <input
-//           type="number"
-//           name="sodium"
-//           value={formData.sodium}
-//           onChange={handleChange}
-//           className="w-full p-2 border rounded-md"
-//           required
-//         />
-//       </div>
-
-//       <div>
-//         <label className="block mb-1">Portion Size (g)</label>
-//         <input
-//           type="number"
-//           name="porpotionSize"
-//           value={formData.porpotionSize}
-//           onChange={handleChange}
-//           className="w-full p-2 border rounded-md"
-//           required
-//         />
-//       </div>
-
-//       <div className="flex gap-4">
-//         <button
-//           type="submit"
-//           disabled={isSubmitting}
-//           className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-//         >
-//           {isSubmitting ? "Processing..." : submitText}
-//         </button>
-//         <button
-//           type="button"
-//           onClick={onCancel}
-//           className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
-//         >
-//           Cancel
-//         </button>
-//       </div>
-//     </form>
-//   );
-// }
-
-// src/components/FoodForm.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Food } from "../types/food";
+import { Button } from "./ui/button";
+
+type FormData = Omit<Food, "_id">;
+
+type FormDisplayState = {
+  [K in keyof Omit<Food, "_id">]: string;
+} & { kategori: string }; // tambahkan kategori di state!
 
 interface FoodFormProps {
-  initialData?: Food;
-  onSubmit: (data: Food) => Promise<void>;
-  isSubmitting: boolean;
-  submitText: string;
-  onCancel: () => void;
+  initialData?: Food | null;
 }
 
-export default function FoodForm({
-  initialData,
-  onSubmit,
-  isSubmitting,
-  submitText,
-  onCancel,
-}: FoodFormProps) {
-  // Inisialisasi dengan nilai default untuk semua format field
-  const [formData, setFormData] = useState<Food>({
-    // Format camelCase
-    name: "",
-    calories: 0,
-    protein: 0,
-    fat: 0,
-    carbs: 0,
-    sodium: 0,
-    porpotionSize: 100,
+export default function FoodForm({ initialData }: FoodFormProps) {
+  const router = useRouter();
+  const isEditMode = Boolean(initialData);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Format kapitalisasi
+  const [formData, setFormData] = useState<FormDisplayState>({
     Menu: "",
-    Energy: 0,
-    Protein: 0,
-    Fat: 0,
-    Carbohydrates: 0,
-    Sodium: 0,
-    Porpotion_Size: 100,
-
-    // Format dengan unit
-    "Energy (kcal)": 0,
-    "Protein (g)": 0,
-    "Fat (g)": 0,
-    "Carbohydrates (g)": 0,
-    "Sodium (mg)": 0,
-    "Portion Size (g)": 100,
+    "Energy (kcal)": "",
+    "Protein (g)": "",
+    "Fat (g)": "",
+    "Carbohydrates (g)": "",
+    "Sugar (g)": "",
+    "Sodium (mg)": "",
+    "Portion Size (g)": "",
+    kategori: "", // <-- tambahkan default kategori!
   });
 
-  // Load initial data if provided (for editing)
   useEffect(() => {
     if (initialData) {
-      // Gunakan data yang ada, atau default ke nilai kosong/nol
-      setFormData({
-        ...initialData,
-        // Pastikan semua field memiliki nilai, meskipun tidak ada di initialData
-        name: initialData.name || initialData.Menu || "",
-        calories:
-          initialData.calories ||
-          initialData.Energy ||
-          initialData["Energy (kcal)"] ||
-          0,
-        protein:
-          initialData.protein ||
-          initialData.Protein ||
-          initialData["Protein (g)"] ||
-          0,
-        fat: initialData.fat || initialData.Fat || initialData["Fat (g)"] || 0,
-        carbs:
-          initialData.carbs ||
-          initialData.Carbohydrates ||
-          initialData["Carbohydrates (g)"] ||
-          0,
-        sodium:
-          initialData.sodium ||
-          initialData.Sodium ||
-          initialData["Sodium (mg)"] ||
-          0,
-        porpotionSize:
-          initialData.porpotionSize ||
-          initialData.Porpotion_Size ||
-          initialData["Portion Size (g)"] ||
-          100,
-
-        Menu: initialData.name || initialData.Menu || "",
-        Energy:
-          initialData.calories ||
-          initialData.Energy ||
-          initialData["Energy (kcal)"] ||
-          0,
-        Protein:
-          initialData.protein ||
-          initialData.Protein ||
-          initialData["Protein (g)"] ||
-          0,
-        Fat: initialData.fat || initialData.Fat || initialData["Fat (g)"] || 0,
-        Carbohydrates:
-          initialData.carbs ||
-          initialData.Carbohydrates ||
-          initialData["Carbohydrates (g)"] ||
-          0,
-        Sodium:
-          initialData.sodium ||
-          initialData.Sodium ||
-          initialData["Sodium (mg)"] ||
-          0,
-        Porpotion_Size:
-          initialData.porpotionSize ||
-          initialData.Porpotion_Size ||
-          initialData["Portion Size (g)"] ||
-          100,
-
-        "Energy (kcal)":
-          initialData.calories ||
-          initialData.Energy ||
-          initialData["Energy (kcal)"] ||
-          0,
-        "Protein (g)":
-          initialData.protein ||
-          initialData.Protein ||
-          initialData["Protein (g)"] ||
-          0,
-        "Fat (g)":
-          initialData.fat || initialData.Fat || initialData["Fat (g)"] || 0,
-        "Carbohydrates (g)":
-          initialData.carbs ||
-          initialData.Carbohydrates ||
-          initialData["Carbohydrates (g)"] ||
-          0,
-        "Sodium (mg)":
-          initialData.sodium ||
-          initialData.Sodium ||
-          initialData["Sodium (mg)"] ||
-          0,
-        "Portion Size (g)":
-          initialData.porpotionSize ||
-          initialData.Porpotion_Size ||
-          initialData["Portion Size (g)"] ||
-          100,
-      });
+      const { _id, ...dataToEdit } = initialData;
+      const stringifiedData: FormDisplayState = {
+        ...Object.fromEntries(
+          Object.entries(dataToEdit).map(([key, value]) => [
+            key,
+            value !== undefined && value !== null ? String(value) : "",
+          ])
+        ),
+        kategori: (initialData as any).kategori ?? "", // Pastikan kategori terisi!
+      } as FormDisplayState;
+      setFormData((currentData) => ({ ...currentData, ...stringifiedData }));
     }
   }, [initialData]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    const isNameField = name === "name";
-    const numValue = isNameField ? value : parseFloat(value) || 0;
+  // Fungsi ini yang membuat Anda BISA mengetik
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value, type } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "number" ? parseFloat(value) || 0 : value,
+    }));
+  };
 
-    // Update semua format field sekaligus
-    if (isNameField) {
-      setFormData({
-        ...formData,
-        name: value,
-        Menu: value,
+  // Logika submit sekarang ada DI DALAM komponen ini
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    // Pastikan kita menggunakan nama 'Menu' dari data yang diedit
+    const foodIdentifier = initialData?.Menu || formData.Menu;
+
+    // Perbaikan: Gunakan endpoint /api/fods/
+    const url = isEditMode
+      ? `/api/fods/${encodeURIComponent(foodIdentifier)}`
+      : "/api/fods";
+
+    const method = isEditMode ? "PUT" : "POST";
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
-    } else {
-      // Update nilai numerik untuk semua format
-      switch (name) {
-        case "calories":
-          setFormData({
-            ...formData,
-            calories: typeof numValue === "number" ? numValue : 0,
-            Energy: typeof numValue === "number" ? numValue : 0,
-            "Energy (kcal)": typeof numValue === "number" ? numValue : 0,
-          });
-          break;
-        case "protein":
-          setFormData({
-            ...formData,
-            protein: typeof numValue === "number" ? numValue : 0,
-            Protein: typeof numValue === "number" ? numValue : 0,
-            "Protein (g)": typeof numValue === "number" ? numValue : 0,
-          });
-          break;
-        case "fat":
-          setFormData({
-            ...formData,
-            fat: typeof numValue === "number" ? numValue : 0,
-            Fat: typeof numValue === "number" ? numValue : 0,
-            "Fat (g)": typeof numValue === "number" ? numValue : 0,
-          });
-          break;
-        case "carbs":
-          setFormData({
-            ...formData,
-            carbs: typeof numValue === "number" ? numValue : 0,
-            Carbohydrates: typeof numValue === "number" ? numValue : 0,
-            "Carbohydrates (g)": typeof numValue === "number" ? numValue : 0,
-          });
-          break;
-        case "sodium":
-          setFormData({
-            ...formData,
-            sodium: typeof numValue === "number" ? numValue : 0,
-            Sodium: typeof numValue === "number" ? numValue : 0,
-            "Sodium (mg)": typeof numValue === "number" ? numValue : 0,
-          });
-          break;
-        case "porpotionSize":
-          setFormData({
-            ...formData,
-            porpotionSize: typeof numValue === "number" ? numValue : 0,
-            Porpotion_Size: typeof numValue === "number" ? numValue : 0,
-            "Portion Size (g)": typeof numValue === "number" ? numValue : 0,
-          });
-          break;
-        default:
-          setFormData({
-            ...formData,
-            [name]: numValue,
-          });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Gagal memproses data makanan");
       }
+
+      toast.success(
+        `Makanan berhasil ${isEditMode ? "diperbarui" : "ditambahkan"}!`
+      );
+      // Arahkan kembali ke halaman admin setelah sukses
+      router.push("/admin");
+      router.refresh();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      toast.error(`Error: ${errorMessage}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await onSubmit(formData);
-  };
+  const formFields: { name: keyof FormData; label: string; type: string }[] = [
+    { name: "Menu", label: "Nama Makanan", type: "text" },
+    { name: "Energy (kcal)", label: "Kalori (kcal)", type: "number" },
+    { name: "Protein (g)", label: "Protein (g)", type: "number" },
+    { name: "Fat (g)", label: "Lemak (g)", type: "number" },
+    { name: "Carbohydrates (g)", label: "Karbohidrat (g)", type: "number" },
+    { name: "Sugar (g)", label: "Gula (g)", type: "number" },
+    { name: "Sodium (mg)", label: "Sodium (mg)", type: "number" },
+    { name: "Portion Size (g)", label: "Porsi (g)", type: "number" },
+  ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 ">
+      {formFields.map((field) => (
+        <div key={field.name}>
+          <label
+            htmlFor={field.name}
+            className="block text-sm font-medium text-gray-700"
+          >
+            {field.label}
+          </label>
+          <input
+            type={field.type}
+            id={field.name}
+            name={field.name}
+            // value dan onChange terhubung ke state internal komponen ini
+            value={formData[field.name] ?? ""}
+            onChange={handleChange}
+            className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+            required
+            disabled={isSubmitting || (isEditMode && field.name === "Menu")}
+          />
+        </div>
+      ))}
       <div>
-        <label className="block mb-1">Name</label>
-        <input
-          type="text"
-          name="name"
-          value={formData.Menu || formData.name}
+        <label className="block text-sm font-medium text-gray-700">
+          Kategori
+        </label>
+        <select
+          name="kategori"
+          value={formData.kategori}
           onChange={handleChange}
-          className="w-full p-2 border rounded-md"
+          className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
           required
-        />
+          disabled={isSubmitting}
+        >
+          <option value="">-- Pilih Kategori --</option>
+          <option value="Pokok">Pokok</option>
+          <option value="Lauk Hewani">Lauk Hewani</option>
+          <option value="Lauk Nabati">Lauk Nabati</option>
+          <option value="Sayur">Sayur</option>
+          <option value="Buah">Buah</option>
+        </select>
       </div>
 
-      <div>
-        <label className="block mb-1">Calories</label>
-        <input
-          type="number"
-          name="calories"
-          value={
-            formData.calories || formData.Energy || formData["Energy (kcal)"]
-          }
-          onChange={handleChange}
-          className="w-full p-2 border rounded-md"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block mb-1">Protein (g)</label>
-        <input
-          type="number"
-          name="protein"
-          value={
-            formData.protein || formData.Protein || formData["Protein (g)"]
-          }
-          onChange={handleChange}
-          className="w-full p-2 border rounded-md"
-          step="0.1"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block mb-1">Fat (g)</label>
-        <input
-          type="number"
-          name="fat"
-          value={formData.fat || formData.Fat || formData["Fat (g)"]}
-          onChange={handleChange}
-          className="w-full p-2 border rounded-md"
-          step="0.1"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block mb-1">Carbs (g)</label>
-        <input
-          type="number"
-          name="carbs"
-          value={
-            formData.carbs ||
-            formData.Carbohydrates ||
-            formData["Carbohydrates (g)"]
-          }
-          onChange={handleChange}
-          className="w-full p-2 border rounded-md"
-          step="0.1"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block mb-1">Sodium (mg)</label>
-        <input
-          type="number"
-          name="sodium"
-          value={formData.sodium || formData.Sodium || formData["Sodium (mg)"]}
-          onChange={handleChange}
-          className="w-full p-2 border rounded-md"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block mb-1">Portion Size (g)</label>
-        <input
-          type="number"
-          name="porpotionSize"
-          value={
-            formData.porpotionSize ||
-            formData.Porpotion_Size ||
-            formData["Portion Size (g)"]
-          }
-          onChange={handleChange}
-          className="w-full p-2 border rounded-md"
-          required
-        />
-      </div>
-
-      <div className="flex gap-4">
-        <button
+      <div className="flex gap-4 pt-4">
+        <Button
           type="submit"
           disabled={isSubmitting}
-          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+          className="flex-1 bg-green-600 hover:bg-green-700"
         >
-          {isSubmitting ? "Processing..." : submitText}
-        </button>
-        <button
+          {isSubmitting
+            ? "Menyimpan..."
+            : isEditMode
+            ? "Update Makanan"
+            : "Tambah Makanan"}
+        </Button>
+        <Button
           type="button"
-          onClick={onCancel}
-          className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+          onClick={() => router.push("/admin")}
+          className="flex-1 bg-red-500 hover:bg-red-600"
         >
-          Cancel
-        </button>
+          Batal
+        </Button>
       </div>
     </form>
   );
