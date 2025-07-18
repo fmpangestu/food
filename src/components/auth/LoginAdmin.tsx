@@ -65,8 +65,15 @@ export default function LoginAdmin() {
           className="mx-auto"
         />
       </div>
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-[0px_2px_8px_0.1px_#a0aec0]">
-        <div className="text-center">
+      <div className="relative w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-[0px_2px_8px_0.1px_#a0aec0]">
+        <Image
+          src="/admin.svg"
+          alt="Logo"
+          width={130}
+          height={130}
+          className="md:hidden absolute left-[10%] -translate-y-5 opacity-[90%]"
+        />
+        <div className="text-center block z-10">
           <h1 className="text-2xl font-bold text-green-600">Admin Login</h1>
           <p className="mt-2 text-gray-600">Masuk untuk mengelola data.</p>
         </div>
