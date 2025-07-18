@@ -1,20 +1,19 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse, NextRequest } from "next/server";
 import clientPromise from "../../../../lib/mongodb_atlas";
 import { Food } from "../../../../types/food";
 
-type RouteParams = {
-  params: {
-    name: string;
-  };
-};
+// type RouteParams tidak diperlukan lagi
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { name: string } }
+) {
   try {
     const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB);
+    const db = client.db(); // Menggunakan DB dari connection string
     const name = decodeURIComponent(params.name);
 
-    // Cari data makanan
     const food = await db.collection<Food>("foods").findOne({ Menu: name });
 
     if (!food) {
@@ -23,7 +22,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // Pastikan field kategori selalu ada walaupun kosong
     if (!("kategori" in food)) {
-      food.kategori = "";
+      (food as any).kategori = "";
     }
 
     return NextResponse.json(food, { status: 200 });
@@ -36,17 +35,18 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { name: string } }
+) {
   try {
     const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB);
+    const db = client.db();
     const name = decodeURIComponent(params.name);
     const updatedData: Partial<Food> = await request.json();
 
-    // Hapus field _id dari data update untuk menghindari error modifikasi immutable field
     delete updatedData._id;
 
-    // Pastikan field kategori tidak undefined (biar default "")
     if (!("kategori" in updatedData)) {
       updatedData.kategori = "";
     }
@@ -72,10 +72,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { name: string } }
+) {
   try {
     const client = await clientPromise;
-    const db = client.db(process.env.MONGODB_DB);
+    const db = client.db();
     const name = decodeURIComponent(params.name);
 
     const result = await db.collection<Food>("foods").deleteOne({ Menu: name });
