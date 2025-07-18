@@ -90,15 +90,15 @@ export default function MealCard({
                 <span className="font-semibold">Sodium:</span> {food.sodium} mg
               </div>
               <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
-                <span className="font-semibold">Gula:</span> {food.sugar} mg
+                <span className="font-semibold">Gula:</span> {food["Sugar (g)"]}{" "}
+                mg
               </div>
               <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
                 <span className="font-semibold">Porsi:</span>{" "}
                 {food.porpotionSize || 100}g
               </div>
               <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
-                <span className="font-semibold">Kategori:</span> {food.kategori}{" "}
-                g
+                <span className="font-semibold">Kategori:</span> {food.kategori}
               </div>
             </div>
           </div>
