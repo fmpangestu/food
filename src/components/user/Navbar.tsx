@@ -9,10 +9,8 @@ export default function Navbar() {
   const router = useRouter();
 
   const handleLogout = () => {
-    signOut({ redirect: false });
-    router.push("/");
+    signOut({ callbackUrl: "/" }); // atau "/login"
   };
-
   return (
     <nav
       style={{ animation: "fadeInDown 0.7s cubic-bezier(.4,0,.2,1)" }}

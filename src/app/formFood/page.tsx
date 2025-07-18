@@ -123,6 +123,7 @@ const FoodRecommendation = () => {
             fat: Number(item["Fat (g)"]),
             carbs: Number(item["Carbohydrates (g)"]),
             sodium: Number(item["Sodium (mg)"]),
+            sugar: Number(item["Sugar (g)"] ?? 0),
             porpotionSize: Number(item["Portion Size (g)"] || 100),
             similarityScore: undefined,
             kategori: getKategori(item.Menu),
