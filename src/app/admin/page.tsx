@@ -60,7 +60,7 @@ export default function AdminPage() {
 
         // Tambahkan timestamp untuk mencegah cache
         const timestamp = new Date().getTime();
-        const response = await fetch(`/api/fods?t=${timestamp}`);
+        const response = await fetch(`/api/foods?t=${timestamp}`);
 
         if (!response.ok) throw new Error("Failed to fetch foods");
 

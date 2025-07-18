@@ -232,8 +232,10 @@ export default function EditFoodPage() {
 
     const fetchFood = async () => {
       try {
-        // Perbaikan: Gunakan endpoint /api/fods/
-        const response = await fetch(`/api/fods/${encodeURIComponent(foodId)}`);
+        // Perbaikan: Gunakan endpoint /api/foods/
+        const response = await fetch(
+          `/api/foods/${encodeURIComponent(foodId)}`
+        );
 
         if (!response.ok) {
           throw new Error("Data makanan tidak ditemukan");
