@@ -24,6 +24,7 @@ export interface FoodUI {
   sodium: number;
   porpotionSize: number;
   similarityScore?: number;
+  sugar?: number;
   kategori: string;
 }
 export type SelectedFoods = {
