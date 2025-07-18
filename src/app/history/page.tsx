@@ -10,17 +10,17 @@ import React from "react";
 function getTotalCalories(arr: any[] = []) {
   return arr.reduce((sum, f) => sum + (f.calories || 0), 0);
 }
-// function formatDate(dateStr: string) {
-//   if (!dateStr) return "-";
-//   const date = new Date(dateStr);
-//   return date.toLocaleString("id-ID", {
-//     day: "2-digit",
-//     month: "short",
-//     year: "numeric",
-//     hour: "2-digit",
-//     minute: "2-digit",
-//   });
-// }
+function formatDate(dateStr: string) {
+  if (!dateStr) return "-";
+  const date = new Date(dateStr);
+  return date.toLocaleString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 export default function HistoryPage() {
   const [history, setHistory] = useState<any[]>([]);
@@ -126,7 +126,7 @@ export default function HistoryPage() {
                     >
                       <td className="text-center">{idx + 1}</td>
                       <td className="text-center">
-                        {/* {item.createdAt
+                        {item.createdAt
                           ? formatDate(item.createdAt)
                           : `${new Date(
                               Date.now() - idx * 86400000
@@ -134,7 +134,7 @@ export default function HistoryPage() {
                               day: "2-digit",
                               month: "short",
                               year: "numeric",
-                            })}`} */}
+                            })}`}
                       </td>
                       <td className="text-center">{total} kcal</td>
                       <td className="max-w-[100px] truncate">

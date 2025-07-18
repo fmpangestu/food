@@ -2,6 +2,7 @@
 import { SelectedFoods } from "@/types/food";
 import MealCard from "./MealCard";
 import { Food } from "@/app/formFood/page";
+import { toast } from "sonner";
 // pastikan path import sesuai
 
 type IdealWeight = {
@@ -184,8 +185,12 @@ const ResultCard: React.FC<ResultCardProps> = ({
               userId
             );
             setSuccess("Pilihan makanan berhasil disimpan!");
+            toast.success(
+              "Pilihan makanan berhasil disimpan! Anda dapat melihatnya di halaman histori."
+            );
           } catch {
             setError("Gagal menyimpan ke database.");
+            toast.error("Gagal menyimpan ke database.");
           }
           setSaveData(false);
         }}

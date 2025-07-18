@@ -235,31 +235,6 @@ const FoodRecommendation = () => {
       setDailySodiumNeeds(sodiumNeeds);
       setSaturedFatLimit(fatLimit);
       setDailyCarbsNeeds(carbsNeeds);
-      // Rekomendasi makanan (panggil dari utils)
-      // recommendFoods(
-      //   adjustedCalories,
-      //   usedFoodNames.current,
-      //   setExcludedCombinations,
-      //   (targetCalories, mealType, excludedFoods, count, maxAttempts) =>
-      //     getMultipleRecommendations(
-      //       foods,
-      //       recommendedFoods,
-      //       proteinNeeds,
-      //       carbsNeeds,
-      //       targetCalories,
-      //       mealType,
-      //       usedFoodNames.current,
-      //       excludedFoods,
-      //       count,
-      //       maxAttempts
-      //       // excludedCombinations,
-      //       // allExcludedFoods.current
-      //     ),
-      //   setRecommendedFoods,
-      //   setBreakfastCalories,
-      //   setLunchCalories,
-      //   setDinnerCalories
-      // );
       recommendFoods(
         adjustedCalories,
         foods,
