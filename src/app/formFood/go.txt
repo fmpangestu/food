@@ -1,417 +1,1406 @@
-// /* eslint-disable @typescript-eslint/no-unused-vars */
-// "use client";
+        import print 
+import PrintRecommendation from "@/components/recommendation/PrintRekomendasi";
+import { handlePrintPDF } from "@/utils/printUtils";
 
-// import { useState } from "react";
-// // import { useRouter } from "next/navigation";
+        {idealWeight && (
+          <PrintRecommendation
+            ref={printTemplateRef}
+            idealWeight={idealWeight.ideal.toString()}
+            success={success}
+            calorieNeeds={calorieNeeds}
+            dailyProteinNeeds={dailyProteinNeeds}
+            dailyCarbsNeeds={dailyCarbsNeeds}
+            dailySugarNeeds={dailySugarNeeds}
+            dailySodiumNeeds={dailySodiumNeeds}
+            saturedFatLimit={saturedFatLimit}
+            breakfastCalories={breakfastCalories}
+            lunchCalories={lunchCalories}
+            dinnerCalories={dinnerCalories}
+            recommendedFoods={recommendedFoods}
+          />
+        )}
 
-// // Tipe untuk data form
-// interface FormData {
-//   weight: string;
-//   height: string;
-//   age: string;
-//   gender: string;
-//   activityLevel: string;
-// }
+        print
 
-// // Tipe untuk hasil makanan
-// interface Food {
-//   name: string;
-//   category: string;
-//   calories: number;
-//   protein: number;
-//   preparation: string;
-//   fat: number;
-//   carbs: number;
-//   portion_weight: number;
-//   description: string;
-//   serving_size: string;
-//   ingredients: string[];
-// }
 
-// const FoodRecommendation = () => {
-//   const [formData, setFormData] = useState<FormData>({
-//     weight: "",
-//     height: "",
-//     age: "",
-//     gender: "male", // Default gender
-//     activityLevel: "sedentary", // Default activity level
-//   });
-//   const [foods, setFoods] = useState<Food[]>([]);
-//   const [loading, setLoading] = useState(false);
-//   const [error, setError] = useState<string | null>(null);
-//   const [success, setSuccess] = useState<string | null>(null); // Success state
-//   const [idealWeight, setIdealWeight] = useState<string | null>(null); // Ideal weight state
-//   const [calorieNeeds, setCalorieNeeds] = useState<number | null>(null); // Calorie needs state
-//   const [dailySugarNeeds, setDailySugarNeeds] = useState<number | null>(null);
-//   const [dailySodiumNeeds, setDailySodiumNeeds] = useState<number | null>(null);
-//   const [dailyProteinNeeds, setDailyProteinNeeds] = useState<number | null>(
-//     null
-//   );
-//   const [dailyCarbsNeeds, setDailyCarbsNeeds] = useState<number | null>(null);
-//   const [saturedFatLimit, setSaturedFatLimit] = useState<number | null>(null);
-//   const [breakfastCalories, setBreakfastCalories] = useState<number | null>(
-//     null
-//   );
-//   const [lunchCalories, setLunchCalories] = useState<number | null>(null);
-//   const [dinnerCalories, setDinnerCalories] = useState<number | null>(null);
+        button print
+                      <button
+                onClick={() => handlePrintPDF(printTemplateRef)}
+                className="hidden bg-white text-[10px]  lg:text-sm text-sky-500 py-1.5 px-2 lg:px-6 rounded-lg font-medium  transition-colors  items-center"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-3.5 w-3.5 lg:h-4 lg:w-4 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                  />
+                </svg>
+                Unduh PDF
+              </button>
 
-//   const handleInputChange = (
-//     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-//   ) => {
-//     const { name, value } = e.target;
-//     setFormData((prevData) => ({
-//       ...prevData,
-//       [name]: value,
-//     }));
-//   };
 
-//   const validateForm = (): boolean => {
-//     const { weight, height, age } = formData;
-//     if (
-//       !weight ||
-//       !height ||
-//       !age ||
-//       Number(weight) <= 0 ||
-//       Number(height) <= 0 ||
-//       Number(age) <= 0
-//     ) {
-//       setError("Semua input harus diisi dengan nilai yang valid.");
-//       setSuccess(null); // Reset success message
-//       return false;
-//     }
-//     setError(null);
-//     return true;
-//   };
+              reff print
+              const printTemplateRef = useRef<HTMLDivElement>(null);
 
-//   const calculateIdealWeight = (height: number) => {
-//     const minBMI = 18.5;
-//     const maxBMI = 24.9;
-//     const heightInMeters = height / 100; // Convert cm to meters
-//     const minWeight = minBMI * heightInMeters * heightInMeters;
-//     const maxWeight = maxBMI * heightInMeters * heightInMeters;
-//     return `${Math.round(minWeight)} - ${Math.round(maxWeight)} kg`;
-//   };
 
-//   const calculateCalorieNeeds = (
-//     weight: number,
-//     height: number,
-//     age: number,
-//     gender: string,
-//     activityLevel: string
-//   ): number => {
-//     // Mifflin-St Jeor Equation to calculate BMR
-//     let bmr: number;
-//     if (gender === "male") {
-//       bmr = 10 * weight + 6.25 * height - 5 * age + 5;
-//     } else {
-//       bmr = 10 * weight + 6.25 * height - 5 * age - 161;
-//     }
 
-//     // Adjust BMR based on activity level
-//     const activityFactors: { [key: string]: number } = {
-//       sedentary: 1.2,
-//       light: 1.375,
-//       moderate: 1.55,
-//       active: 1.725,
-//     };
+              result card
 
-//     return Math.round(bmr * (activityFactors[activityLevel] || 1.2)); // Default to sedentary if no match
-//   };
 
-//   const calculateDailyNutrientNeeds = (
-//     calories: number,
-//     weight: number,
-//     age: number,
-//     gender: string
-//   ) => {
-//     const proteinNeeds = Math.round(weight * 0.8); // gram per kg berat badan
-//     const sugarNeeds = Math.min((calories * 0.1) / 4, 50); // 1 gram gula = 4 kalori
-//     setDailySugarNeeds(sugarNeeds); // gram, rekomendasi umum
-//     let sodiumNeeds: number;
-//     if (age < 1) {
-//       sodiumNeeds = 1; // 1 gram per hari
-//     } else if (age <= 3) {
-//       sodiumNeeds = 2; // 2 gram per hari
-//     } else if (age <= 6) {
-//       sodiumNeeds = 3; // 3 gram per hari
-//     } else if (age <= 10) {
-//       sodiumNeeds = 5; // 5 gram per hari
-//     } else {
-//       sodiumNeeds = 6; // 6 gram per hari
-//     }
-//     const saturedFatLimit = gender === "male" ? 30 : 20;
-//     const carbsNeeds = Math.round(calories * 0.55) / 4; // 1 gram karbohidrat = 4 kalori
-//     setDailySodiumNeeds(sodiumNeeds); // mg, rekomendasi umum
-//     setDailyProteinNeeds(proteinNeeds);
-//     setDailySugarNeeds(sugarNeeds);
-//     setDailySodiumNeeds(sodiumNeeds);
-//     setDailyCarbsNeeds(carbsNeeds);
-//     setSaturedFatLimit(saturedFatLimit);
-//   };
+                        <div className=" mt-4  bg-gradient-to-br from-blue-500 to-green-500 text-white rounded-lg p-4 shadow-[0px_2px_7px_0.1px_#2d3748] ">
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-sm lg:text-xl font-semibold">
+                Berat Badan IdealMu: {idealWeight.ideal} kg{" "}
+                <span className="italic text-sm">
+                  (Range: {idealWeight.range}){" "}
+                </span>
+              </h2>
+              {/* button print */}
+            </div>
+            {success && (
+              <div className="p-[3px] bg-gradient-to-r from-white to-sky-500 rounded-lg">
+                <p className="w-full bg-gradient-to-r from-sky-500 to-blue-800 text-transparent bg-clip-text px-2 py-1 rounded-md">
+                  Note: {success}
+                </p>
+              </div>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2">
+              <h3 className="mt-2">Kalori HarianMu: {calorieNeeds}kcal</h3>
+              <h3 className="mt-2">Protein HarianMu: {dailyProteinNeeds}g</h3>
+              <h3 className="mt-2">Gula HarianMu: {dailySugarNeeds}g</h3>
+              <h3 className="mt-2">Sodium HarianMu: {dailySodiumNeeds}g</h3>
+              <h3 className="mt-2">Karbohidrat HarianMu: {dailyCarbsNeeds}g</h3>
+              <h3 className="mt-2">
+                Batas Lemak Jenuh HarianMu: {saturedFatLimit}g
+              </h3>
+            </div>
+            <div className="hidden lg:block mt-4">
+              <h3 className="text-xl font-semibold">
+                Pembagian Kalori Harian:
+              </h3>
+              <ul className="mt-5 grid text-sky-500 font-semibold lg:grid-cols-3 justify-between text-center items-center ">
+                <li className="bg-white w-52 rounded-md py-1 translate-x-1/2">
+                  Sarapan: {breakfastCalories} kcal
+                </li>
+                <li className="bg-white w-52 rounded-md py-1 translate-x-1/2">
+                  Makan Siang: {lunchCalories} kcal
+                </li>
+                <li className="bg-white w-52 rounded-md py-1 translate-x-1/2">
+                  Makan Malam: {dinnerCalories} kcal
+                </li>
+              </ul>
+            </div>
+            <div className="grid lg:grid-cols-3 gap-4 mt-4">
+              <div className="mt-4">
+                <h3 className="lg:hidden text-xl font-semibold">
+                  Rekomendasi Sarapan:
+                </h3>
+                <MealCard
+                  foods={recommendedFoods.breakfast}
+                  mealType="breakfast"
+                  selectedFoods={selectedFoods}
+                  onSelectFood={onSelectFood}
+                  getNewMealRecommendations={handleNewMeal}
+                  targetCalories={breakfastCalories}
+                />
+              </div>
+              <div className="mt-4">
+                <h3 className="lg:hidden text-xl font-semibold">
+                  Rekomendasi Makan Siang:
+                </h3>
+                <MealCard
+                  foods={recommendedFoods.lunch}
+                  mealType="lunch"
+                  selectedFoods={selectedFoods}
+                  onSelectFood={onSelectFood}
+                  getNewMealRecommendations={handleNewMeal}
+                  targetCalories={lunchCalories}
+                />
+              </div>
+              <div className="mt-4">
+                <h3 className="lg:hidden text-xl font-semibold">
+                  Rekomendasi Makan Malam:
+                </h3>
+                <MealCard
+                  foods={recommendedFoods.dinner}
+                  mealType="dinner"
+                  selectedFoods={selectedFoods}
+                  onSelectFood={onSelectFood}
+                  getNewMealRecommendations={handleNewMeal}
+                  targetCalories={dinnerCalories}
+                />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button
+                className="bg-white min-w-full text-sky-600 px-6 py-2 rounded-lg font-semibold hover:bg-sky-100 transition"
+                onClick={async () => {
+                  setLoading(true);
+                  try {
+                    await saveSelection(
+                      formData,
+                      selectedFoods,
+                      {
+                        idealWeight,
+                        note: success,
+                        calorieNeeds,
+                        dailySugarNeeds,
+                        dailySodiumNeeds,
+                        dailyProteinNeeds,
+                        dailyCarbsNeeds,
+                        saturedFatLimit,
+                        breakfastCalories,
+                        lunchCalories,
+                        dinnerCalories,
+                      },
+                      userId
+                    );
+                    setSuccess("Pilihan makanan berhasil disimpan!");
+                  } catch {
+                    setError("Gagal menyimpan ke database.");
+                  }
+                  setLoading(false);
+                }}
+                disabled={loading}
+              >
+                {loading ? "Menyimpan..." : "Simpan Pilihan"}
+              </button>
+            </div>
+          </div>
 
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-//     if (!validateForm()) return;
 
-//     setLoading(true);
-//     setError(null);
-//     setSuccess(null); // Reset success message before fetch
 
-//     const weightNum = parseFloat(formData.weight);
-//     const heightNum = parseFloat(formData.height);
-//     const ageNum = parseInt(formData.age, 10);
+          //utils
+          import cosineSimilarity from "@/lib/cosineSimilarity";
+import { Food } from "@/app/formFood/page";
 
-//     // Calculate ideal weight and calorie needs
-//     const idealWeightRange = calculateIdealWeight(heightNum);
-//     const calorieNeedsValue = calculateCalorieNeeds(
-//       weightNum,
-//       heightNum,
-//       ageNum,
-//       formData.gender,
-//       formData.activityLevel
-//     );
-//     setIdealWeight(idealWeightRange);
-//     setCalorieNeeds(calorieNeedsValue);
+type MealType = "breakfast" | "lunch" | "dinner";
 
-//     // Evaluate weight status
-//     const [minIdealWeight, maxIdealWeight] = idealWeightRange
-//       .split(" - ")
-//       .map((w) => parseFloat(w));
-//     let statusMessage = "";
-//     let adjustedCalories = calorieNeedsValue;
-//     if (weightNum < minIdealWeight) {
-//       adjustedCalories += 500; // Surplus calories for weight gain
-//       statusMessage = `Berat badan Anda kurang. Untuk mencapai berat ideal, tingkatkan asupan kalori harian Anda hingga ${adjustedCalories} kcal dan fokus pada makanan bergizi tinggi.`;
-//     } else if (weightNum > maxIdealWeight) {
-//       adjustedCalories -= 500; // Deficit calories for weight loss
-//       statusMessage = `Berat badan Anda berlebih. Untuk mencapai berat ideal, kurangi asupan kalori harian menjadi sekitar ${adjustedCalories} kcal.`;
-//     } else {
-//       statusMessage = `Berat badan Anda sudah ideal. Pertahankan pola makan dan aktivitas fisik untuk menjaga kesehatan Anda.`;
-//     }
+// Fungsi untuk ekstrak bahan utama dari nama makanan
+function getBahanUtama(name: string): string {
+  const lower = name.toLowerCase();
+  if (lower.includes("tahu")) return "tahu";
+  if (lower.includes("ayam")) return "ayam";
+  if (lower.includes("telur")) return "telur";
+  if (lower.includes("tempe")) return "tempe";
+  if (lower.includes("daging")) return "daging";
+  if (lower.includes("ikan")) return "ikan";
+  if (lower.includes("udang")) return "udang";
+  if (lower.includes("nasi")) return "nasi";
+  if (lower.includes("roti")) return "roti";
+  if (lower.includes("oat")) return "oat";
+  if (lower.includes("kentang")) return "kentang";
+  return lower.split(" ")[0];
+}
 
-//     setSuccess(statusMessage);
+export function getMultipleRecommendations(
+  foods: Food[],
+  recommendedFoods: { [key: string]: Food[] },
+  dailyProteinNeeds: number | null,
+  dailyCarbsNeeds: number | null,
+  targetCalories: number,
+  mealType: MealType,
+  usedFoodNames: Set<string>,
+  excludedFoods: Set<string> = new Set(),
+  count: number = 3, //jumlah rekomendasi
+  maxAttempts: number = 20,
+  excludedCombinations: { [key: string]: Set<string> },
+  allExcludedFoods: { [key: string]: Set<string> }
+): Food[] {
+  const perFoodTarget = targetCalories / count;
+  let minCaloriesPerFood, maxCaloriesPerFood;
+  if (mealType === "breakfast") {
+    minCaloriesPerFood = perFoodTarget * 0.5;
+    maxCaloriesPerFood = perFoodTarget * 1.5;
+  } else if (mealType === "dinner") {
+    minCaloriesPerFood = perFoodTarget * 0.6;
+    maxCaloriesPerFood = perFoodTarget * 1.4;
+  } else {
+    minCaloriesPerFood = perFoodTarget * 0.7;
+    maxCaloriesPerFood = perFoodTarget * 1.3;
+  }
 
-//     const calculateMealCalories = (totalCalories: number) => {
-//       const breakfastCalories = Math.round(totalCalories * 0.25);
-//       const lunchCalories = Math.round(totalCalories * 0.5);
-//       const dinnerCalories = Math.round(totalCalories * 0.25);
-//       return { breakfastCalories, lunchCalories, dinnerCalories };
-//     };
+  let availableFoods = foods.filter(
+    (food) =>
+      food.calories >= minCaloriesPerFood &&
+      food.calories <= maxCaloriesPerFood &&
+      !usedFoodNames.has(food.name) &&
+      !excludedFoods.has(food.name)
+  );
 
-//     const { breakfastCalories, lunchCalories, dinnerCalories } =
-//       calculateMealCalories(adjustedCalories);
-//     setBreakfastCalories(breakfastCalories);
-//     setLunchCalories(lunchCalories);
-//     setDinnerCalories(dinnerCalories);
+  // --- Cari kombinasi 1 pokok + 2 non-pokok dengan bahan utama unik dan kalori paling mendekati target ---
+  const pokok = availableFoods.filter((f) => f.kategori === "Pokok");
+  const nonPokok = availableFoods.filter((f) => f.kategori !== "Pokok");
 
-//     calculateDailyNutrientNeeds(
-//       adjustedCalories,
-//       weightNum,
-//       ageNum,
-//       formData.gender
-//     );
+  if (pokok.length && nonPokok.length >= 2) {
+    let bestCombo: Food[] = [];
+    let bestDiff = Infinity;
 
-//     try {
-//       const res = await fetch("/api/recommendations", {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json",
-//         },
-//         body: JSON.stringify(formData),
-//       });
+    for (let i = 0; i < pokok.length; i++) {
+      for (let j = 0; j < nonPokok.length; j++) {
+        for (let k = j + 1; k < nonPokok.length; k++) {
+          // Pastikan tidak dobel nama dan tidak dobel bahan utama
+          const names = new Set([
+            pokok[i].name,
+            nonPokok[j].name,
+            nonPokok[k].name,
+          ]);
+          const bahanUtamaSet = new Set([
+            getBahanUtama(pokok[i].name),
+            getBahanUtama(nonPokok[j].name),
+            getBahanUtama(nonPokok[k].name),
+          ]);
+          if (names.size < 3 || bahanUtamaSet.size < 3) continue;
 
-//       if (!res.ok) {
-//         const errorData = await res.json();
-//         throw new Error(errorData.message || "Gagal mendapatkan rekomendasi.");
-//       }
+          const combo = [pokok[i], nonPokok[j], nonPokok[k]];
+          const totalKal = combo.reduce((sum, f) => sum + f.calories, 0);
+          const diff = Math.abs(totalKal - targetCalories);
 
-//       const data = await res.json();
-//       setFoods(data.foods);
-//     } catch (err) {
-//       setError(err instanceof Error ? err.message : "Terjadi kesalahan.");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
+          if (diff < bestDiff) {
+            bestDiff = diff;
+            bestCombo = combo;
+          }
+        }
+      }
+    }
 
-//   return (
-//     <>
-//       <div className="md:container mx-2 md:mx-auto p-6 text-white bg-[#00712D] mt-4 rounded-xl">
-//         <h1 className="text-2xl font-bold mb-4">Rekomendasi Makanan Sehat</h1>
-//         <form className="space-y-4" onSubmit={handleSubmit}>
-//           <div>
-//             <label className="block mb-2" htmlFor="weight">
-//               Berat Badan (kg)
-//             </label>
-//             <input
-//               type="number"
-//               id="weight"
-//               name="weight"
-//               value={formData.weight}
-//               onChange={handleInputChange}
-//               className="text-[#0d1821] bg-white outline-[#0d1821] rounded-lg p-2 w-full"
-//               required
-//             />
-//           </div>
+    if (bestCombo.length === 3) {
+      bestCombo.forEach((food) => usedFoodNames.add(food.name));
+      return bestCombo;
+    }
+  }
 
-//           <div>
-//             <label className="block mb-2" htmlFor="height">
-//               Tinggi Badan (cm)
-//             </label>
-//             <input
-//               type="number"
-//               id="height"
-//               name="height"
-//               value={formData.height}
-//               onChange={handleInputChange}
-//               className="text-[#0d1821] outline-[#0d1821] rounded-lg p-2 w-full"
-//               required
-//             />
-//           </div>
+  // --- fallback ke proses lama jika kombinasi tidak ditemukan ---
+  if (availableFoods.length < count * 2) {
+    availableFoods = foods.filter(
+      (food) => !usedFoodNames.has(food.name) && !excludedFoods.has(food.name)
+    );
+  }
 
-//           <div>
-//             <label className="block mb-2" htmlFor="age">
-//               Usia (tahun)
-//             </label>
-//             <input
-//               type="number"
-//               id="age"
-//               name="age"
-//               value={formData.age}
-//               onChange={handleInputChange}
-//               className="text-[#0d1821] outline-[#0d1821] rounded-lg p-2 w-full"
-//               required
-//             />
-//           </div>
+  if (availableFoods.length < count) {
+    const otherMealTypes = ["breakfast", "lunch", "dinner"].filter(
+      (type) => type !== mealType
+    );
+    const otherMealFoods = new Set<string>();
+    otherMealTypes.forEach((type) => {
+      recommendedFoods[type as "breakfast" | "lunch" | "dinner"].forEach(
+        (food) => otherMealFoods.add(food.name)
+      );
+    });
+    availableFoods = foods.filter((food) => !otherMealFoods.has(food.name));
+  }
 
-//           <div>
-//             <label className="block mb-2" htmlFor="gender">
-//               Jenis Kelamin
-//             </label>
-//             <select
-//               id="gender"
-//               name="gender"
-//               value={formData.gender}
-//               onChange={handleInputChange}
-//               className="text-[#0d1821] outline-[#0d1821] rounded-lg p-2 w-full"
-//             >
-//               <option value="male">Laki-laki</option>
-//               <option value="female">Perempuan</option>
-//             </select>
-//           </div>
+  const targetProfile = {
+    calories: perFoodTarget,
+    protein: dailyProteinNeeds
+      ? (dailyProteinNeeds * (mealType === "lunch" ? 0.5 : 0.25)) / count
+      : 0,
+    carbs: dailyCarbsNeeds
+      ? (dailyCarbsNeeds * (mealType === "lunch" ? 0.5 : 0.25)) / count
+      : 0,
+    fat: (targetCalories * 0.3) / 9 / count,
+  };
 
-//           <div>
-//             <label className="block mb-2" htmlFor="activityLevel">
-//               Tingkat Aktivitas
-//             </label>
-//             <select
-//               id="activityLevel"
-//               name="activityLevel"
-//               value={formData.activityLevel}
-//               onChange={handleInputChange}
-//               className="text-[#0d1821] outline-[#0d1821] rounded-lg p-2 w-full"
-//             >
-//               <option value="sedentary">Sedentary (Minim aktivitas)</option>
-//               <option value="light">
-//                 Ringan (Olahraga ringan 1-3 hari/minggu)
-//               </option>
-//               <option value="moderate">
-//                 Sedang (Olahraga moderat 3-5 hari/minggu)
-//               </option>
-//               <option value="active">
-//                 Aktif (Olahraga intensif 6-7 hari/minggu)
-//               </option>
-//             </select>
-//           </div>
+  const foodsWithScores = availableFoods.map((food) => {
+    const foodVector = [food.calories, food.protein, food.carbs, food.fat];
+    const targetVector = [
+      targetProfile.calories,
+      targetProfile.protein,
+      targetProfile.carbs,
+      targetProfile.fat,
+    ];
+    let calorieMatch =
+      1 - Math.abs(food.calories - perFoodTarget) / perFoodTarget;
+    if (food.calories > perFoodTarget) {
+      const overagePercent = (food.calories - perFoodTarget) / perFoodTarget;
+      if (mealType === "breakfast") {
+        calorieMatch -= overagePercent * 0.5;
+      } else {
+        calorieMatch -= overagePercent * 0.3;
+      }
+    }
+    const similarityScore =
+      cosineSimilarity(foodVector, targetVector) * (0.7 + 0.3 * calorieMatch);
+    return { ...food, similarityScore };
+  });
 
-//           {error && (
-//             <p className="absolute top-0 w-[80%] text-red-500 px-2 py-1 rounded-lg">
-//               {error}
-//             </p>
-//           )}
+  const sortedFoods = foodsWithScores.sort(
+    (a, b) => (b.similarityScore || 0) - (a.similarityScore || 0)
+  );
 
-//           <button
-//             type="submit"
-//             className="bg-[#D5ED9F] font-semibold w-full text-[#00712D] py-2 px-4 rounded"
-//             disabled={loading}
-//           >
-//             {loading ? "Loading..." : "Submit"}
-//           </button>
-//         </form>
-//       </div>
-//       <div className="md:container mx-2 md:mx-auto mb-5 rounded-xl">
-//         {idealWeight && (
-//           <div className="mt-4 bg-[#D5ED9F] text-[#00712D] rounded-lg p-4 ">
-//             <h2 className="text-xl font-semibold">
-//               Berat Badan IdealMu: {idealWeight}
-//             </h2>
-//             {success && (
-//               <p className=" w-full text-[#FF9100] bg-[#FFFBE6] px-2 py-1 rounded-lg">
-//                 Note: {success}
-//               </p>
-//             )}
-//             <div className="grid grid-cols-1 sm:grid-cols-2">
-//               <h3 className="mt-2">Kalori HarianMu: {calorieNeeds}kcal</h3>
-//               <h3 className="mt-2">Protein HarianMu: {dailyProteinNeeds}g</h3>
-//               <h3 className="mt-2">Gula HarianMu: {dailySugarNeeds}g</h3>
-//               <h3 className="mt-2">Sodium HarianMu: {dailySodiumNeeds}g</h3>
-//               <h3 className="mt-2">Karbohidrat HarianMu: {dailyCarbsNeeds}g</h3>
-//               <h3 className="mt-2">
-//                 Batas Lemak Jenuh HarianMu: {saturedFatLimit}g
-//               </h3>
-//             </div>
-//             {/* {success && <p className="mt-2 text-green-500">{success}</p>} */}
-//             <div className="mt-4">
-//               <h3 className="text-xl font-semibold">
-//                 Pembagian Kalori Harian:
-//               </h3>
-//               <ul className="grid grid-cols-3 justify-between text-center items-center ">
-//                 <li>Sarapan: {breakfastCalories} kcal</li>
-//                 <li>Makan Siang: {lunchCalories} kcal</li>
-//                 <li>Makan Malam: {dinnerCalories} kcal</li>
-//               </ul>
-//             </div>
-//           </div>
-//         )}
+  const selectedFoods: Food[] = [];
+  let attempts = 0;
 
-//         {foods.length > 0 && (
-//           <div className="mt-4">
-//             <h3 className="text-xl font-semibold">Rekomendasi Makanan:</h3>
-//             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-2">
-//               {foods.map((food, index) => (
-//                 <div
-//                   key={index}
-//                   className="border border-[#ffffff] rounded-md p-4"
-//                 >
-//                   <h2 className="font-semibold text-lg">{food.name}</h2>
-//                   <p>Deskripsi: {food.description}</p>
-//                   <p>Persiapan: {food.preparation}</p>
-//                   <p>porsi: {food.portion_weight}g</p>
-//                   <p>Kategori: {food.category}</p>
-//                   <h4>Nutrisi</h4>
-//                   <ul>
-//                     <li>Protein: {food.protein} g</li>
-//                     <li>Kalori: {food.calories} kcal</li>
-//                     <li>fat: {food.fat} g</li>
-//                     <li>Carbs: {food.carbs} g</li>
-//                     <li>Serving Size: {food.serving_size}</li>
-//                   </ul>
-//                   <h4>Resep:</h4>
-//                   <ul className="list-disc ">
-//                     {food.ingredients.map((ingredient, index) => (
-//                       <li key={index} className="list-inside">
-//                         {ingredient}
-//                       </li>
-//                     ))}
-//                   </ul>
-//                 </div>
-//               ))}
-//             </div>
-//           </div>
-//         )}
-//       </div>
-//     </>
-//   );
-// };
+  while (selectedFoods.length < count && attempts < maxAttempts) {
+    attempts++;
+    selectedFoods.length = 0;
+    const tempUsedNames = new Set<string>();
+    for (
+      let i = 0;
+      i < sortedFoods.length && selectedFoods.length < count;
+      i++
+    ) {
+      const food = sortedFoods[i];
+      if (
+        !tempUsedNames.has(food.name) &&
+        !usedFoodNames.has(food.name) &&
+        !excludedFoods.has(food.name)
+      ) {
+        selectedFoods.push(food);
+        tempUsedNames.add(food.name);
+      }
+    }
+    if (selectedFoods.length < count && attempts > maxAttempts / 2) {
+      for (let i = 0; i < foods.length && selectedFoods.length < count; i++) {
+        const food = foods[i];
+        if (
+          !tempUsedNames.has(food.name) &&
+          !usedFoodNames.has(food.name) &&
+          food.calories >= minCaloriesPerFood &&
+          food.calories <= maxCaloriesPerFood
+        ) {
+          selectedFoods.push(food);
+          tempUsedNames.add(food.name);
+        }
+      }
+      if (selectedFoods.length < count) continue;
+    }
+    if (selectedFoods.length === count) {
+      const foodSignature = selectedFoods
+        .map((food) => food.name)
+        .sort()
+        .join("|");
+      if (excludedCombinations[mealType].has(foodSignature)) {
+        selectedFoods.forEach((food) => excludedFoods.add(food.name));
+        continue;
+      }
+      selectedFoods.forEach((food) => usedFoodNames.add(food.name));
+      selectedFoods.forEach((food) => {
+        allExcludedFoods[mealType].add(food.name);
+      });
+      break;
+    }
+  }
 
-// export default FoodRecommendation;
+  if (selectedFoods.length < count) {
+    allExcludedFoods[mealType].clear();
+    const fallbackFoods = foods
+      .filter(
+        (food) =>
+          !usedFoodNames.has(food.name) &&
+          food.calories >= minCaloriesPerFood &&
+          food.calories <= maxCaloriesPerFood
+      )
+      .slice(0, count);
+    if (fallbackFoods.length < count) {
+      const anyFoods = foods
+        .filter((food) => !usedFoodNames.has(food.name))
+        .sort(
+          (a, b) =>
+            Math.abs(a.calories - perFoodTarget) -
+            Math.abs(b.calories - perFoodTarget)
+        )
+        .slice(0, count);
+      anyFoods.forEach((food) => usedFoodNames.add(food.name));
+      return anyFoods;
+    }
+    fallbackFoods.forEach((food) => usedFoodNames.add(food.name));
+    return fallbackFoods;
+  }
+
+  // Fallback kategori jika tetap gagal
+  if (selectedFoods.length !== count) {
+    const pokok = foods.filter(
+      (f) =>
+        f.kategori === "Pokok" &&
+        !usedFoodNames.has(f.name) &&
+        !excludedFoods.has(f.name)
+    );
+    const lauk = foods.filter(
+      (f) =>
+        (f.kategori === "Lauk Hewani" || f.kategori === "Lauk Nabati") &&
+        !usedFoodNames.has(f.name) &&
+        !excludedFoods.has(f.name)
+    );
+    const sayur = foods.filter(
+      (f) =>
+        f.kategori === "Sayur" &&
+        !usedFoodNames.has(f.name) &&
+        !excludedFoods.has(f.name)
+    );
+    const getRandom = (arr: Food[]) =>
+      arr[Math.floor(Math.random() * arr.length)];
+    const kategoriFoods: Food[] = [];
+    if (pokok.length) kategoriFoods.push(getRandom(pokok));
+    if (lauk.length) kategoriFoods.push(getRandom(lauk));
+    if (sayur.length) kategoriFoods.push(getRandom(sayur));
+    kategoriFoods.forEach((food) => usedFoodNames.add(food.name));
+    return kategoriFoods;
+  }
+
+  return selectedFoods;
+}
+
+export function recommendFoods(
+  calorieNeeds: number,
+  usedFoodNames: Set<string>,
+  setExcludedCombinations: React.Dispatch<
+    React.SetStateAction<{
+      breakfast: Set<string>;
+      lunch: Set<string>;
+      dinner: Set<string>;
+    }>
+  >,
+  getMultipleRecommendations: (
+    targetCalories: number,
+    mealType: "breakfast" | "lunch" | "dinner",
+    excludedFoods?: Set<string>,
+    count?: number,
+    maxAttempts?: number
+  ) => Food[],
+  setRecommendedFoods: React.Dispatch<
+    React.SetStateAction<{ breakfast: Food[]; lunch: Food[]; dinner: Food[] }>
+  >,
+  setBreakfastCalories: (val: number) => void,
+  setLunchCalories: (val: number) => void,
+  setDinnerCalories: (val: number) => void
+) {
+  const calculateMealCalories = (totalCalories: number) => {
+    const breakfastCalories = Math.round(totalCalories * 0.25);
+    const lunchCalories = Math.round(totalCalories * 0.375);
+    const dinnerCalories = Math.round(totalCalories * 0.375);
+    return { breakfastCalories, lunchCalories, dinnerCalories };
+  };
+
+  const { breakfastCalories, lunchCalories, dinnerCalories } =
+    calculateMealCalories(calorieNeeds);
+
+  usedFoodNames.clear();
+
+  setExcludedCombinations({
+    breakfast: new Set(),
+    lunch: new Set(),
+    dinner: new Set(),
+  });
+
+  const breakfast = getMultipleRecommendations(breakfastCalories, "breakfast");
+  const lunch = getMultipleRecommendations(lunchCalories, "lunch");
+  const dinner = getMultipleRecommendations(dinnerCalories, "dinner");
+
+  setRecommendedFoods({
+    breakfast,
+    lunch,
+    dinner,
+  });
+
+  setBreakfastCalories(breakfastCalories);
+  setLunchCalories(lunchCalories);
+  setDinnerCalories(dinnerCalories);
+}
+
+
+recommendationutil
+
+  // --- Pastikan selalu ada 1 pokok, sisanya random unik (tidak sama nama) ---
+
+  // const pokok = availableFoods.filter((f) => f.kategori === "Pokok");
+  // if (pokok.length) {
+  //   const getRandom = (arr: Food[]) =>
+  //     arr[Math.floor(Math.random() * arr.length)];
+  //   const pokokFood = getRandom(pokok);
+
+  //   // Ambil 2 makanan lain (bukan pokok, nama beda, dan belum used)
+  //   const sisaFoods = availableFoods.filter(
+  //     (f) => f.name !== pokokFood.name && f.kategori !== "Pokok"
+  //   );
+  //   // Random 2 makanan unik dari sisaFoods
+  //   const sisaPilihan: Food[] = [];
+  //   const sisaCopy = [...sisaFoods];
+  //   while (sisaPilihan.length < 2 && sisaCopy.length > 0) {
+  //     const idx = Math.floor(Math.random() * sisaCopy.length);
+  //     sisaPilihan.push(sisaCopy[idx]);
+  //     sisaCopy.splice(idx, 1);
+  //   }
+
+  //   // Gabungkan pokok + 2 makanan lain
+  //   const kategoriFoods: Food[] = [pokokFood, ...sisaPilihan];
+  //   kategoriFoods.forEach((food) => usedFoodNames.add(food.name));
+  //   return kategoriFoods;
+  // }
+
+
+  //recommendationutils tgl 14
+  import cosineSimilarity from "@/lib/cosineSimilarity";
+import { Food } from "@/app/formFood/page";
+
+function getBahanUtama(name: string): string {
+  const lower = name.toLowerCase();
+  if (lower.includes("tahu")) return "tahu";
+  if (lower.includes("ayam")) return "ayam";
+  if (lower.includes("telur")) return "telur";
+  if (lower.includes("tempe")) return "tempe";
+  if (lower.includes("daging")) return "daging";
+  if (lower.includes("ikan")) return "ikan";
+  if (lower.includes("udang")) return "udang";
+  if (lower.includes("nasi")) return "nasi";
+  if (lower.includes("roti")) return "roti";
+  if (lower.includes("oat")) return "oat";
+  if (lower.includes("kentang")) return "kentang";
+  if (lower.includes("tumis")) return "tumis";
+  if (lower.includes("sayur")) return "sayur";
+  if (lower.includes("sup")) return "sup";
+  return lower.split(" ")[0];
+}
+function isCaloriesClose(foods: Food[], target: number, tolerance = 0.1) {
+  const total = foods.reduce((sum, f) => sum + f.calories, 0);
+  return Math.abs(total - target) <= target * tolerance;
+}
+type MealType = "breakfast" | "lunch" | "dinner";
+export function getMultipleRecommendations(
+  foods: Food[],
+  recommendedFoods: { [key: string]: Food[] },
+  dailyProteinNeeds: number | null,
+  dailyCarbsNeeds: number | null,
+  targetCalories: number,
+  mealType: MealType,
+  usedFoodNames: Set<string>,
+  excludedFoods: Set<string> = new Set(),
+  count: number = 3, //jumlah rekomendasi
+  maxAttempts: number = 20,
+  excludedCombinations: { [key: string]: Set<string> },
+  allExcludedFoods: { [key: string]: Set<string> }
+): Food[] {
+  const perFoodTarget = targetCalories / count;
+  let minCaloriesPerFood, maxCaloriesPerFood;
+  if (mealType === "breakfast") {
+    minCaloriesPerFood = perFoodTarget * 0.5;
+    maxCaloriesPerFood = perFoodTarget * 1.5;
+  } else if (mealType === "dinner") {
+    minCaloriesPerFood = perFoodTarget * 0.6;
+    maxCaloriesPerFood = perFoodTarget * 1.4;
+  } else {
+    minCaloriesPerFood = perFoodTarget * 0.7;
+    maxCaloriesPerFood = perFoodTarget * 1.3;
+  }
+
+  let availableFoods = foods.filter(
+    (food) =>
+      food.calories >= minCaloriesPerFood &&
+      food.calories <= maxCaloriesPerFood &&
+      !usedFoodNames.has(food.name) &&
+      !excludedFoods.has(food.name)
+  );
+
+  const pokok = availableFoods.filter((f) => f.kategori === "Pokok");
+  if (pokok.length) {
+    const getRandom = (arr: Food[]) =>
+      arr[Math.floor(Math.random() * arr.length)];
+    let tryCount = 0;
+    while (tryCount < 20) {
+      tryCount++;
+      const pokokFood = getRandom(pokok);
+
+      // Ambil 2 makanan lain (bukan pokok, nama beda, dan belum used)
+      const sisaFoods = availableFoods.filter(
+        (f) => f.name !== pokokFood.name && f.kategori !== "Pokok"
+      );
+      // Random 2 makanan unik dari sisaFoods, bahan utama tidak boleh sama
+      const sisaPilihan: Food[] = [];
+      const sisaCopy = [...sisaFoods];
+      while (sisaPilihan.length < 2 && sisaCopy.length > 0) {
+        const idx = Math.floor(Math.random() * sisaCopy.length);
+        const candidate = sisaCopy[idx];
+        // Cek bahan utama tidak dobel
+        const bahanUtamaSet = new Set([
+          getBahanUtama(pokokFood.name),
+          ...sisaPilihan.map((f) => getBahanUtama(f.name)),
+          getBahanUtama(candidate.name),
+        ]);
+        // Cek tidak ada nama sama
+        const namaSet = new Set([
+          pokokFood.name,
+          ...sisaPilihan.map((f) => f.name),
+          candidate.name,
+        ]);
+        if (
+          bahanUtamaSet.size === sisaPilihan.length + 2 &&
+          namaSet.size === sisaPilihan.length + 2
+        ) {
+          sisaPilihan.push(candidate);
+        }
+        sisaCopy.splice(idx, 1);
+      }
+      if (sisaPilihan.length === 2) {
+        const kategoriFoods: Food[] = [pokokFood, ...sisaPilihan];
+        kategoriFoods.forEach((food) => usedFoodNames.add(food.name));
+        return kategoriFoods;
+      }
+    }
+  }
+  if (availableFoods.length < count * 2) {
+    availableFoods = foods.filter(
+      (food) => !usedFoodNames.has(food.name) && !excludedFoods.has(food.name)
+    );
+  }
+
+  if (availableFoods.length < count) {
+    const otherMealTypes = ["breakfast", "lunch", "dinner"].filter(
+      (type) => type !== mealType
+    );
+    const otherMealFoods = new Set<string>();
+    otherMealTypes.forEach((type) => {
+      recommendedFoods[type as "breakfast" | "lunch" | "dinner"].forEach(
+        (food) => otherMealFoods.add(food.name)
+      );
+    });
+    availableFoods = foods.filter((food) => !otherMealFoods.has(food.name));
+  }
+
+  const targetProfile = {
+    calories: perFoodTarget,
+    protein: dailyProteinNeeds
+      ? (dailyProteinNeeds * (mealType === "lunch" ? 0.5 : 0.25)) / count
+      : 0,
+    carbs: dailyCarbsNeeds
+      ? (dailyCarbsNeeds * (mealType === "lunch" ? 0.5 : 0.25)) / count
+      : 0,
+    fat: (targetCalories * 0.3) / 9 / count,
+  };
+
+  const foodsWithScores = availableFoods.map((food) => {
+    const foodVector = [food.calories, food.protein, food.carbs, food.fat];
+    const targetVector = [
+      targetProfile.calories,
+      targetProfile.protein,
+      targetProfile.carbs,
+      targetProfile.fat,
+    ];
+    let calorieMatch =
+      1 - Math.abs(food.calories - perFoodTarget) / perFoodTarget;
+    if (food.calories > perFoodTarget) {
+      const overagePercent = (food.calories - perFoodTarget) / perFoodTarget;
+      if (mealType === "breakfast") {
+        calorieMatch -= overagePercent * 0.5;
+      } else {
+        calorieMatch -= overagePercent * 0.3;
+      }
+    }
+    const similarityScore =
+      cosineSimilarity(foodVector, targetVector) * (0.7 + 0.3 * calorieMatch);
+    return { ...food, similarityScore };
+  });
+
+  const sortedFoods = foodsWithScores.sort(
+    (a, b) => (b.similarityScore || 0) - (a.similarityScore || 0)
+  );
+
+  const selectedFoods: Food[] = [];
+  let attempts = 0;
+
+  while (selectedFoods.length < count && attempts < maxAttempts) {
+    attempts++;
+    selectedFoods.length = 0;
+    const tempUsedNames = new Set<string>();
+    for (
+      let i = 0;
+      i < sortedFoods.length && selectedFoods.length < count;
+      i++
+    ) {
+      const food = sortedFoods[i];
+      if (
+        !tempUsedNames.has(food.name) &&
+        !usedFoodNames.has(food.name) &&
+        !excludedFoods.has(food.name)
+      ) {
+        selectedFoods.push(food);
+        tempUsedNames.add(food.name);
+      }
+    }
+    if (selectedFoods.length < count && attempts > maxAttempts / 2) {
+      for (let i = 0; i < foods.length && selectedFoods.length < count; i++) {
+        const food = foods[i];
+        if (
+          !tempUsedNames.has(food.name) &&
+          !usedFoodNames.has(food.name) &&
+          food.calories >= minCaloriesPerFood &&
+          food.calories <= maxCaloriesPerFood
+        ) {
+          selectedFoods.push(food);
+          tempUsedNames.add(food.name);
+        }
+      }
+      if (selectedFoods.length < count) continue;
+    }
+    if (selectedFoods.length === count) {
+      const foodSignature = selectedFoods
+        .map((food) => food.name)
+        .sort()
+        .join("|");
+      if (excludedCombinations[mealType].has(foodSignature)) {
+        selectedFoods.forEach((food) => excludedFoods.add(food.name));
+        continue;
+      }
+      selectedFoods.forEach((food) => usedFoodNames.add(food.name));
+      selectedFoods.forEach((food) => {
+        allExcludedFoods[mealType].add(food.name);
+      });
+      break;
+    }
+  }
+
+  // if (selectedFoods.length < count) {
+  //   allExcludedFoods[mealType].clear();
+  //   const fallbackFoods = foods
+  //     .filter(
+  //       (food) =>
+  //         !usedFoodNames.has(food.name) &&
+  //         food.calories >= minCaloriesPerFood &&
+  //         food.calories <= maxCaloriesPerFood
+  //     )
+  //     .slice(0, count);
+  //   if (fallbackFoods.length < count) {
+  //     const anyFoods = foods
+  //       .filter((food) => !usedFoodNames.has(food.name))
+  //       .sort(
+  //         (a, b) =>
+  //           Math.abs(a.calories - perFoodTarget) -
+  //           Math.abs(b.calories - perFoodTarget)
+  //       )
+  //       .slice(0, count);
+  //     anyFoods.forEach((food) => usedFoodNames.add(food.name));
+  //     return anyFoods;
+  //   }
+  //   fallbackFoods.forEach((food) => usedFoodNames.add(food.name));
+  //   return fallbackFoods;
+  // }
+  if (selectedFoods.length < count) {
+    allExcludedFoods[mealType].clear();
+    const fallbackFoods = foods
+      .filter(
+        (food) =>
+          !usedFoodNames.has(food.name) &&
+          food.calories >= minCaloriesPerFood &&
+          food.calories <= maxCaloriesPerFood
+      )
+      .slice(0, count);
+    const totalFallbackCalories = fallbackFoods.reduce(
+      (sum, f) => sum + f.calories,
+      0
+    );
+    if (
+      fallbackFoods.length === count &&
+      totalFallbackCalories <= targetCalories
+    ) {
+      fallbackFoods.forEach((food) => usedFoodNames.add(food.name));
+      return fallbackFoods;
+    }
+    const anyFoods = foods
+      .filter((food) => !usedFoodNames.has(food.name))
+      .sort(
+        (a, b) =>
+          Math.abs(a.calories - perFoodTarget) -
+          Math.abs(b.calories - perFoodTarget)
+      )
+      .slice(0, count);
+    const totalAnyCalories = anyFoods.reduce((sum, f) => sum + f.calories, 0);
+    if (anyFoods.length === count && totalAnyCalories <= targetCalories) {
+      anyFoods.forEach((food) => usedFoodNames.add(food.name));
+      return anyFoods;
+    }
+    // Jika tetap tidak ada, return []
+    return [];
+  }
+
+  if (selectedFoods.length !== count) {
+    const pokok = foods.filter(
+      (f) =>
+        f.kategori === "Pokok" &&
+        !usedFoodNames.has(f.name) &&
+        !excludedFoods.has(f.name)
+    );
+    const lauk = foods.filter(
+      (f) =>
+        (f.kategori === "Lauk Hewani" || f.kategori === "Lauk Nabati") &&
+        !usedFoodNames.has(f.name) &&
+        !excludedFoods.has(f.name)
+    );
+    const sayur = foods.filter(
+      (f) =>
+        f.kategori === "Sayur" &&
+        !usedFoodNames.has(f.name) &&
+        !excludedFoods.has(f.name)
+    );
+    // Cari kombinasi pokok-lauk-sayur yang bahan utama/jenisnya unik semua
+    for (let i = 0; i < pokok.length; i++) {
+      for (let j = 0; j < lauk.length; j++) {
+        for (let k = 0; k < sayur.length; k++) {
+          const bahanUtamaArr = [
+            getBahanUtama(pokok[i].name),
+            getBahanUtama(lauk[j].name),
+            getBahanUtama(sayur[k].name),
+          ];
+          // Cek: hanya boleh ada satu "sayur" atau "sup"
+          const countSayurSup = bahanUtamaArr.filter(
+            (b) => b === "sayur" || b === "sup"
+          ).length;
+          // Cek: hanya boleh ada satu "tumis"
+          const countTumis = bahanUtamaArr.filter((b) => b === "tumis").length;
+          const bahanSet = new Set(bahanUtamaArr);
+          // if (bahanSet.size === 3 && countSayurSup <= 1 && countTumis <= 1) {
+          //   const kategoriFoods = [pokok[i], lauk[j], sayur[k]];
+          //   kategoriFoods.forEach((food) => usedFoodNames.add(food.name));
+          //   return kategoriFoods;
+          // }
+          if (
+            bahanSet.size === 3 &&
+            countSayurSup <= 1 &&
+            countTumis <= 1 &&
+            pokok[i].kategori === "Pokok" &&
+            (lauk[j].kategori === "Lauk Hewani" ||
+              lauk[j].kategori === "Lauk Nabati") &&
+            sayur[k].kategori === "Sayur"
+          ) {
+            const kategoriFoods = [pokok[i], lauk[j], sayur[k]];
+            kategoriFoods.forEach((food) => usedFoodNames.add(food.name));
+            if (
+              kategoriFoods.length === 3 &&
+              isCaloriesClose(kategoriFoods, targetCalories, 0.1)
+            ) {
+              kategoriFoods.forEach((food) => usedFoodNames.add(food.name));
+              return kategoriFoods;
+            }
+          }
+        }
+      }
+    }
+
+    const getRandom = (arr: Food[]) =>
+      arr[Math.floor(Math.random() * arr.length)];
+    let tryCount = 0;
+    while (tryCount < 20) {
+      tryCount++;
+      const result: Food[] = [];
+      const kategoriSet = new Set<string>();
+      if (pokok.length) {
+        const food = getRandom(pokok);
+        if (!kategoriSet.has(food.kategori)) {
+          result.push(food);
+          kategoriSet.add(food.kategori);
+        }
+      }
+      if (lauk.length) {
+        const food = getRandom(lauk);
+        if (!kategoriSet.has(food.kategori)) {
+          result.push(food);
+          kategoriSet.add(food.kategori);
+        }
+      }
+      if (sayur.length) {
+        const food = getRandom(sayur);
+        if (!kategoriSet.has(food.kategori)) {
+          result.push(food);
+          kategoriSet.add(food.kategori);
+        }
+      }
+      const bahanSet = new Set(result.map((f) => getBahanUtama(f.name)));
+      if (
+        result.length === 3 &&
+        bahanSet.size === 3 &&
+        kategoriSet.size === 3 &&
+        isCaloriesClose(result, targetCalories, 0.1) // <-- tambahkan validasi ini!
+      ) {
+        result.forEach((food) => usedFoodNames.add(food.name));
+        return result;
+      }
+    }
+    // Jika tetap gagal, random saja (data sangat terbatas)
+    const kategoriFoods: Food[] = [];
+    const kategoriSet = new Set<string>();
+    const allCandidates = [...pokok, ...lauk, ...sayur];
+    const shuffled = allCandidates.sort(() => Math.random() - 0.5);
+    for (const food of shuffled) {
+      if (!kategoriSet.has(food.kategori)) {
+        kategoriFoods.push(food);
+        kategoriSet.add(food.kategori);
+      }
+      if (kategoriFoods.length === 3) break;
+    }
+    if (
+      kategoriFoods.length === 3 &&
+      isCaloriesClose(kategoriFoods, targetCalories, 0.1)
+    ) {
+      kategoriFoods.forEach((food) => usedFoodNames.add(food.name));
+      return kategoriFoods;
+    }
+    let bestFoods: Food[] = [];
+    let bestDiff = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < allCandidates.length - 2; i++) {
+      for (let j = i + 1; j < allCandidates.length - 1; j++) {
+        for (let k = j + 1; k < allCandidates.length; k++) {
+          const combo = [allCandidates[i], allCandidates[j], allCandidates[k]];
+          const totalCalories = combo.reduce((sum, f) => sum + f.calories, 0);
+          const diff = Math.abs(totalCalories - targetCalories);
+          // Hanya pilih kombinasi yang total kalori <= targetCalories
+          if (totalCalories <= targetCalories && diff < bestDiff) {
+            bestFoods = combo;
+            bestDiff = diff;
+          }
+        }
+      }
+    }
+    if (bestFoods.length === 3) {
+      bestFoods.forEach((food) => usedFoodNames.add(food.name));
+      return bestFoods;
+    }
+  }
+
+  return selectedFoods;
+}
+
+export function recommendFoods(
+  calorieNeeds: number,
+  usedFoodNames: Set<string>,
+  setExcludedCombinations: React.Dispatch<
+    React.SetStateAction<{
+      breakfast: Set<string>;
+      lunch: Set<string>;
+      dinner: Set<string>;
+    }>
+  >,
+  getMultipleRecommendations: (
+    targetCalories: number,
+    mealType: "breakfast" | "lunch" | "dinner",
+    excludedFoods?: Set<string>,
+    count?: number,
+    maxAttempts?: number
+  ) => Food[],
+  setRecommendedFoods: React.Dispatch<
+    React.SetStateAction<{ breakfast: Food[]; lunch: Food[]; dinner: Food[] }>
+  >,
+  setBreakfastCalories: (val: number) => void,
+  setLunchCalories: (val: number) => void,
+  setDinnerCalories: (val: number) => void
+) {
+  const calculateMealCalories = (totalCalories: number) => {
+    const breakfastCalories = Math.round(totalCalories * 0.25);
+    const lunchCalories = Math.round(totalCalories * 0.375);
+    const dinnerCalories = Math.round(totalCalories * 0.375);
+    return { breakfastCalories, lunchCalories, dinnerCalories };
+  };
+
+  const { breakfastCalories, lunchCalories, dinnerCalories } =
+    calculateMealCalories(calorieNeeds);
+
+  usedFoodNames.clear();
+
+  setExcludedCombinations({
+    breakfast: new Set(),
+    lunch: new Set(),
+    dinner: new Set(),
+  });
+
+  const breakfast = getMultipleRecommendations(breakfastCalories, "breakfast");
+  const lunch = getMultipleRecommendations(lunchCalories, "lunch");
+  const dinner = getMultipleRecommendations(dinnerCalories, "dinner");
+
+  setRecommendedFoods({
+    breakfast,
+    lunch,
+    dinner,
+  });
+
+  setBreakfastCalories(breakfastCalories);
+  setLunchCalories(lunchCalories);
+  setDinnerCalories(dinnerCalories);
+}
+
+
+recommendationutil tgl 14
+/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
+import { useEffect, useState, useRef } from "react";
+import Navbar from "@/components/user/Navbar";
+import { handleSelectFood, SelectedFoods } from "./checkboxLogic";
+import { saveSelection } from "./saveSelection";
+import { useSession } from "next-auth/react";
+// import MealCard from "@/components/recommendation/MealCard";
+import FormFoodInput from "@/components/user/FormInput";
+import {
+  validateForm,
+  calculateIdealWeight,
+  calculateCalorieNeeds,
+  calculateDailyNutrientNeeds,
+} from "@/utils/nutritionUtils";
+// HAPUS: import { calculateMealCalories } from "@/utils/mealUtils";
+import {
+  getMultipleRecommendations,
+  recommendFoods,
+} from "@/utils/recommendationUtils";
+import { getNewMealRecommendations } from "@/utils/newMealUtils";
+import ResultCard from "@/components/recommendation/ResultCard";
+import { getKategori } from "@/utils/foodKategori";
+export interface Food {
+  name: string;
+  calories: number;
+  protein: number;
+  fat: number;
+  carbs: number;
+  sodium: number;
+  porpotionSize: number;
+  similarityScore?: number;
+  kategori: string;
+}
+const FoodRecommendation = () => {
+  const [formData, setFormData] = useState({
+    weight: "",
+    height: "",
+    age: "",
+    gender: "male",
+    activityLevel: "sedentary",
+  });
+  const [foods, setFoods] = useState<Food[]>([]);
+  const [recommendedFoods, setRecommendedFoods] = useState<{
+    breakfast: Food[];
+    lunch: Food[];
+    dinner: Food[];
+  }>({ breakfast: [], lunch: [], dinner: [] });
+  const [loading, setLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveData, setSaveData] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [mode, setMode] = useState<"personal" | "custom">("personal");
+  // const [idealWeight, setIdealWeight] = useState<string | null>(null); // sebelum mengembalikan object
+  const [idealWeight, setIdealWeight] = useState<{
+    range: string;
+    ideal: number;
+  } | null>(null);
+  const [calorieNeeds, setCalorieNeeds] = useState<number | null>(null);
+  const [dailySugarNeeds, setDailySugarNeeds] = useState<number | null>(null);
+  const [dailySodiumNeeds, setDailySodiumNeeds] = useState<number | null>(null);
+  const [dailyProteinNeeds, setDailyProteinNeeds] = useState<number | null>(
+    null
+  );
+  const [dailyCarbsNeeds, setDailyCarbsNeeds] = useState<number | null>(null);
+  const [saturedFatLimit, setSaturedFatLimit] = useState<number | null>(null);
+  const [breakfastCalories, setBreakfastCalories] = useState<number | null>(
+    null
+  );
+  const [lunchCalories, setLunchCalories] = useState<number | null>(null);
+  const [dinnerCalories, setDinnerCalories] = useState<number | null>(null);
+  const [menuChangeCount, setMenuChangeCount] = useState({
+    breakfast: 0,
+    lunch: 0,
+    dinner: 0,
+  });
+  const allExcludedFoods = useRef<{
+    breakfast: Set<string>;
+    lunch: Set<string>;
+    dinner: Set<string>;
+  }>({
+    breakfast: new Set(),
+    lunch: new Set(),
+    dinner: new Set(),
+  });
+  const [excludedCombinations, setExcludedCombinations] = useState<{
+    breakfast: Set<string>;
+    lunch: Set<string>;
+    dinner: Set<string>;
+  }>({
+    breakfast: new Set(),
+    lunch: new Set(),
+    dinner: new Set(),
+  });
+  const [selectedFoods, setSelectedFoods] = useState<SelectedFoods>({
+    breakfast: [],
+    lunch: [],
+    dinner: [],
+  });
+  const onSelectFood = (meal: keyof SelectedFoods, food: Food) => {
+    setSelectedFoods((prev) => handleSelectFood(prev, meal, food));
+  };
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
+  // Gunakan useRef untuk konsistensi usedFoodNames
+  const usedFoodNames = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    const fetchFoods = async () => {
+      try {
+        const response = await fetch("/api/fods");
+        if (!response.ok)
+          throw new Error("Gagal mengambil data makanan dari server.");
+        const dataFromMongo = await response.json();
+        if (Array.isArray(dataFromMongo)) {
+          const typedData: Food[] = dataFromMongo.map((item: any) => ({
+            name: item.Menu,
+            calories: Number(item["Energy (kcal)"]),
+            protein: Number(item["Protein (g)"]),
+            fat: Number(item["Fat (g)"]),
+            carbs: Number(item["Carbohydrates (g)"]),
+            sodium: Number(item["Sodium (mg)"]),
+            porpotionSize: Number(item["Portion Size (g)"] || 100),
+            similarityScore: undefined,
+            kategori: getKategori(item.Menu),
+          }));
+          setFoods(typedData);
+        }
+      } catch (error) {
+        console.error("Error saat memuat data makanan dari MongoDB:", error);
+      }
+    };
+    fetchFoods();
+  }, []);
+  useEffect(() => {
+    if (mode === "personal" && userId) {
+      setProfileLoading(true);
+      fetch(`/api/saveProfile?userId=${userId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.formData) {
+            setFormData(data.formData);
+          }
+        });
+    } else if (mode === "custom") {
+      setFormData({
+        weight: "",
+        height: "",
+        age: "",
+        gender: "male",
+        activityLevel: "sedentary",
+      });
+      setProfileLoading(false);
+    }
+  }, [mode, userId]);
+  const handleSave = async () => {
+    setSaving(true);
+    setTimeout(async () => {
+      await fetch("/api/saveProfile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, ...formData }),
+      });
+      setSaving(false);
+    }, 2000);
+  };
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+  // --- Gunakan utils untuk validasi dan kalkulasi ---
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm(formData, setError, setSuccess)) return;
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+    setTimeout(() => {
+      const weightNum = parseFloat(formData.weight);
+      const heightNum = parseFloat(formData.height);
+      const ageNum = parseInt(formData.age, 10);
+      // const idealWeightRange = calculateIdealWeight(heightNum); // bmirumus
+      const idealWeightRange = calculateIdealWeight(heightNum, formData.gender);
+      const calorieNeedsValue = calculateCalorieNeeds(
+        weightNum,
+        heightNum,
+        ageNum,
+        formData.gender,
+        formData.activityLevel
+      );
+      setIdealWeight(idealWeightRange);
+      setCalorieNeeds(calorieNeedsValue);
+      // const [minIdealWeight, maxIdealWeight] = idealWeightRange
+      //   .split(" - ")
+      //   .map((w) => parseFloat(w)); sebelum mengembalikan object
+      const [minIdealWeight, maxIdealWeight] = idealWeightRange.range
+        .replace(" kg", "")
+        .split(" - ")
+        .map((w) => parseFloat(w));
+      let statusMessage = "";
+      let adjustedCalories = calorieNeedsValue;
+      if (weightNum < minIdealWeight) {
+        adjustedCalories += 500;
+        statusMessage = `Berat badan Anda kurang. Untuk mencapai berat ideal, tingkatkan asupan kalori harian Anda hingga ${adjustedCalories} kcal dan fokus pada makanan bergizi tinggi.`;
+      } else if (weightNum > maxIdealWeight) {
+        adjustedCalories -= 500;
+        statusMessage = `Berat badan Anda berlebih. Untuk mencapai berat ideal, kurangi asupan kalori harian menjadi sekitar ${adjustedCalories} kcal.`;
+      } else {
+        statusMessage = `Berat badan Anda sudah ideal. Pertahankan pola makan dan aktivitas fisik untuk menjaga kesehatan Anda.`;
+      }
+      setSuccess(statusMessage);
+      // Kalkulasi kebutuhan nutrisi harian
+      const {
+        proteinNeeds,
+        sugarNeeds,
+        sodiumNeeds,
+        saturedFatLimit: fatLimit,
+        carbsNeeds,
+      } = calculateDailyNutrientNeeds(
+        adjustedCalories,
+        weightNum,
+        ageNum,
+        formData.gender
+      );
+      setDailyProteinNeeds(proteinNeeds);
+      setDailySugarNeeds(sugarNeeds);
+      setDailySodiumNeeds(sodiumNeeds);
+      setSaturedFatLimit(fatLimit);
+      setDailyCarbsNeeds(carbsNeeds);
+      // Rekomendasi makanan (panggil dari utils)
+      recommendFoods(
+        adjustedCalories,
+        usedFoodNames.current,
+        setExcludedCombinations,
+        (targetCalories, mealType, excludedFoods, count, maxAttempts) =>
+          getMultipleRecommendations(
+            foods,
+            recommendedFoods,
+            proteinNeeds,
+            carbsNeeds,
+            targetCalories,
+            mealType,
+            usedFoodNames.current,
+            excludedFoods,
+            count,
+            maxAttempts,
+            excludedCombinations,
+            allExcludedFoods.current
+          ),
+        setRecommendedFoods,
+        setBreakfastCalories,
+        setLunchCalories,
+        setDinnerCalories
+      );
+      setLoading(false);
+    }, 5000);
+  };
+  // Handler untuk ganti menu meal (panggil dari utils)
+  const handleNewMeal = (mealType: "breakfast" | "lunch" | "dinner") => {
+    getNewMealRecommendations({
+      mealType,
+      menuChangeCount,
+      setMenuChangeCount,
+      recommendedFoods,
+      setExcludedCombinations,
+      usedFoodNames: usedFoodNames.current,
+      allExcludedFoods,
+      breakfastCalories,
+      lunchCalories,
+      dinnerCalories,
+      getMultipleRecommendations: (
+        targetCalories,
+        mealType,
+        excludedFoods,
+        count,
+        maxAttempts
+      ) =>
+        getMultipleRecommendations(
+          foods,
+          recommendedFoods,
+          dailyProteinNeeds,
+          dailyCarbsNeeds,
+          targetCalories,
+          mealType,
+          usedFoodNames.current,
+          excludedFoods,
+          count,
+          maxAttempts,
+          excludedCombinations,
+          allExcludedFoods.current
+        ),
+      setRecommendedFoods,
+    });
+  };
+  // reff print
+  return (
+    <>
+      <Navbar />
+      {profileLoading && (
+        <div
+          style={{ animation: "fadeInUp 0.7s cubic-bezier(.4,0,.2,1)" }}
+          className="md:container mx-2 md:mx-auto p-6 text-white  bg-gradient-to-tr from-blue-500 to-green-500 mt-4 rounded-xl shadow-[0px_2px_7px_0.1px_#2d3748]"
+        >
+          <h1 className="text-2xl font-bold mb-4">Rekomendasi Makanan Sehat</h1>
+          <div className="hidden w-full gap-2 mb-4">
+            <button
+              className={`w-full px-2 py-1 rounded-lg transition-colors
+      ${
+        mode === "personal"
+          ? "border-b-2 border-white text-white font-bold"
+          : "border-b-0 text-gray-300 hover:text-white"
+      }`}
+              onClick={() => setMode("personal")}
+              type="button"
+            >
+              Data Pribadi
+            </button>
+            <button
+              className={`w-full px-2 py-1 rounded-lg transition-colors
+      ${
+        mode === "custom"
+          ? "border-b-2 border-white text-white font-bold"
+          : "border-b-0 text-gray-300 hover:text-white"
+      }`}
+              onClick={() => setMode("custom")}
+              type="button"
+            >
+              Data Lain
+            </button>
+          </div>
+          <FormFoodInput
+            formData={formData}
+            onChange={handleInputChange}
+            onSubmit={handleSubmit}
+            error={error}
+            saving={saving}
+            loading={loading}
+            showSave={mode === "personal"}
+            onSave={handleSave}
+          />
+        </div>
+      )}
+      <div className="md:container mx-2 md:mx-auto mb-5 rounded-xl">
+        {idealWeight && !loading && (
+          <ResultCard
+            idealWeight={idealWeight}
+            success={success}
+            calorieNeeds={calorieNeeds}
+            dailyProteinNeeds={dailyProteinNeeds}
+            dailySugarNeeds={dailySugarNeeds}
+            dailySodiumNeeds={dailySodiumNeeds}
+            dailyCarbsNeeds={dailyCarbsNeeds}
+            saturedFatLimit={saturedFatLimit}
+            breakfastCalories={breakfastCalories}
+            lunchCalories={lunchCalories}
+            dinnerCalories={dinnerCalories}
+            recommendedFoods={recommendedFoods}
+            selectedFoods={selectedFoods}
+            onSelectFood={onSelectFood}
+            handleNewMeal={handleNewMeal}
+            setSaveData={setSaveData}
+            saveSelection={saveSelection}
+            formData={formData}
+            userId={userId}
+            setSuccess={setSuccess}
+            setError={setError}
+            saveData={saveData}
+          />
+        )}
+        {/* tempat print */}
+      </div>
+    </>
+  );
+};
+export default FoodRecommendation;

@@ -1,7 +1,8 @@
 import { ObjectId } from "mongodb";
 
+// types/food.ts
 export interface Food {
-  _id?: ObjectId | string; // ID dari MongoDB bisa berupa ObjectId atau string
+  _id?: ObjectId | string;
   Menu: string;
   "Energy (kcal)": number;
   "Protein (g)": number;
@@ -9,8 +10,27 @@ export interface Food {
   "Carbohydrates (g)": number;
   "Sodium (mg)": number;
   "Portion Size (g)": number;
-  "Sugar (g)"?: number; // Properti tambahan opsional
+  "Sugar (g)"?: number;
+  kategori?: string; // <-- tambah ini
 }
+
+// Bisa di file types/food-ui.ts
+export interface FoodUI {
+  name: string;
+  calories: number;
+  protein: number;
+  fat: number;
+  carbs: number;
+  sodium: number;
+  porpotionSize: number;
+  similarityScore?: number;
+  kategori: string;
+}
+export type SelectedFoods = {
+  breakfast: FoodUI[];
+  lunch: FoodUI[];
+  dinner: FoodUI[];
+};
 // export interface Food {
 //   name: string;
 //   calories: number;

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
@@ -9,6 +10,10 @@ import { Button } from "./ui/button";
 
 type FormData = Omit<Food, "_id">;
 
+type FormDisplayState = {
+  [K in keyof Omit<Food, "_id">]: string;
+} & { kategori: string }; // tambahkan kategori di state!
+
 interface FoodFormProps {
   initialData?: Food | null;
 }
@@ -18,26 +23,38 @@ export default function FoodForm({ initialData }: FoodFormProps) {
   const isEditMode = Boolean(initialData);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<FormDisplayState>({
     Menu: "",
-    "Energy (kcal)": 0,
-    "Protein (g)": 0,
-    "Fat (g)": 0,
-    "Carbohydrates (g)": 0,
-    "Sugar (g)": 0,
-    "Sodium (mg)": 0,
-    "Portion Size (g)": 100,
+    "Energy (kcal)": "",
+    "Protein (g)": "",
+    "Fat (g)": "",
+    "Carbohydrates (g)": "",
+    "Sugar (g)": "",
+    "Sodium (mg)": "",
+    "Portion Size (g)": "",
+    kategori: "", // <-- tambahkan default kategori!
   });
 
   useEffect(() => {
     if (initialData) {
       const { _id, ...dataToEdit } = initialData;
-      setFormData((currentData) => ({ ...currentData, ...dataToEdit }));
+      const stringifiedData: FormDisplayState = {
+        ...Object.fromEntries(
+          Object.entries(dataToEdit).map(([key, value]) => [
+            key,
+            value !== undefined && value !== null ? String(value) : "",
+          ])
+        ),
+        kategori: (initialData as any).kategori ?? "", // Pastikan kategori terisi!
+      } as FormDisplayState;
+      setFormData((currentData) => ({ ...currentData, ...stringifiedData }));
     }
   }, [initialData]);
 
   // Fungsi ini yang membuat Anda BISA mengetik
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value, type } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -98,8 +115,7 @@ export default function FoodForm({ initialData }: FoodFormProps) {
   ];
 
   return (
-    // Form ini sekarang menangani event submit-nya sendiri
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 ">
       {formFields.map((field) => (
         <div key={field.name}>
           <label
@@ -121,6 +137,27 @@ export default function FoodForm({ initialData }: FoodFormProps) {
           />
         </div>
       ))}
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          Kategori
+        </label>
+        <select
+          name="kategori"
+          value={formData.kategori}
+          onChange={handleChange}
+          className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+          required
+          disabled={isSubmitting}
+        >
+          <option value="">-- Pilih Kategori --</option>
+          <option value="Pokok">Pokok</option>
+          <option value="Lauk Hewani">Lauk Hewani</option>
+          <option value="Lauk Nabati">Lauk Nabati</option>
+          <option value="Sayur">Sayur</option>
+          <option value="Buah">Buah</option>
+        </select>
+      </div>
+
       <div className="flex gap-4 pt-4">
         <Button
           type="submit"
@@ -136,7 +173,7 @@ export default function FoodForm({ initialData }: FoodFormProps) {
         <Button
           type="button"
           onClick={() => router.push("/admin")}
-          className="flex-1 bg-gray-500 hover:bg-gray-600"
+          className="flex-1 bg-red-500 hover:bg-red-600"
         >
           Batal
         </Button>

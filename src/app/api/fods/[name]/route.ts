@@ -14,10 +14,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const db = client.db(process.env.MONGODB_DB);
     const name = decodeURIComponent(params.name);
 
+    // Cari data makanan
     const food = await db.collection<Food>("foods").findOne({ Menu: name });
 
     if (!food) {
       return NextResponse.json({ error: "Food not found" }, { status: 404 });
+    }
+
+    // Pastikan field kategori selalu ada walaupun kosong
+    if (!("kategori" in food)) {
+      food.kategori = "";
     }
 
     return NextResponse.json(food, { status: 200 });
@@ -39,6 +45,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     // Hapus field _id dari data update untuk menghindari error modifikasi immutable field
     delete updatedData._id;
+
+    // Pastikan field kategori tidak undefined (biar default "")
+    if (!("kategori" in updatedData)) {
+      updatedData.kategori = "";
+    }
 
     const result = await db
       .collection<Food>("foods")

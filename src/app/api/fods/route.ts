@@ -26,6 +26,9 @@ export async function POST(request: NextRequest) {
     const db = client.db(process.env.MONGODB_DB);
     const newFood: Food = await request.json();
 
+    if (!("kategori" in newFood)) {
+      newFood.kategori = "";
+    }
     // Validasi sederhana
     if (!newFood.Menu || typeof newFood.Menu !== "string") {
       return NextResponse.json(

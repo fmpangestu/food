@@ -11,6 +11,7 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -101,7 +102,7 @@ export default function Register() {
             />
             <button
               type="button"
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400"
+              className="absolute text-green-600 inset-y-0 right-0 pr-3 flex items-center "
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? (
@@ -119,14 +120,27 @@ export default function Register() {
           >
             Konfirmasi Password
           </label>
-          <input
-            id="confirm-password"
-            type="password"
-            required
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-          />
+          <div className="relative mt-1">
+            <input
+              id="confirm-password"
+              type={showConfirmPassword ? "text" : "password"}
+              required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+            />
+            <button
+              type="button"
+              className="absolute text-green-600 inset-y-0 right-0 pr-3 flex items-center "
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            >
+              {showConfirmPassword ? (
+                <EyeOff className="h-5 w-5" />
+              ) : (
+                <Eye className="h-5 w-5" />
+              )}
+            </button>
+          </div>
         </div>
         <div>
           <button

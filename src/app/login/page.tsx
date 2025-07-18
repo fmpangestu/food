@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import Image from "next/image";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -59,8 +60,17 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow">
+    <main className="flex flex-col md:flex-row gap-10 items-center justify-center min-h-screen bg-gray-100 mx-5 md:mx-0">
+      <div className="hidden md:block w-full max-w-md">
+        <Image
+          src="/admin.svg"
+          alt="Logo"
+          width={400}
+          height={400}
+          className="mx-auto"
+        />
+      </div>
+      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-[0px_2px_8px_0.1px_#a0aec0]">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-green-600">Admin Login</h1>
           <p className="mt-2 text-gray-600">Masuk untuk mengelola data.</p>
@@ -103,13 +113,13 @@ export default function AdminLoginPage() {
               />
               <button
                 type="button"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-green-600"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
-                  <EyeOff className="h-5 w-5 text-gray-400" />
+                  <EyeOff className="h-5 w-5" />
                 ) : (
-                  <Eye className="h-5 w-5 text-gray-400" />
+                  <Eye className="h-5 w-5" />
                 )}
               </button>
             </div>
