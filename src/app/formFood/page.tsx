@@ -262,6 +262,7 @@ const FoodRecommendation = () => {
     dinner: new Set(),
   });
 
+  // ...existing code...
   const handleNewMeal = (mealType: "breakfast" | "lunch" | "dinner") => {
     let targetCalories = 0;
     if (mealType === "breakfast") targetCalories = breakfastCalories ?? 0;
@@ -275,18 +276,11 @@ const FoodRecommendation = () => {
         .flatMap(([_, foods]) => foods.map((f) => f.name))
     );
 
-    // Buat signature kombinasi meal yang sekarang
-    const currentSignature = recommendedFoods[mealType]
-      .map((f) => f.name)
-      .sort()
-      .join("|");
+    // Ambil signature kombinasi yang sudah pernah keluar
+    const prevSignatures = excludedCombinations[mealType];
 
-    setExcludedCombinations((prev) => {
-      const updated = { ...prev };
-      updated[mealType] = new Set(prev[mealType]);
-      if (currentSignature) updated[mealType].add(currentSignature);
-
-      // Dapatkan rekomendasi baru dengan excludedCombos yang sudah diupdate
+    // Dapatkan rekomendasi baru
+    setRecommendedFoods((prevFoods) => {
       const newFoods = getMultipleRecommendations(
         foods,
         recommendedFoods,
@@ -297,14 +291,25 @@ const FoodRecommendation = () => {
         foodsToExclude,
         3,
         30,
-        updated[mealType]
+        new Set(prevSignatures) // gunakan signature sebelumnya
       );
-      setRecommendedFoods((prevFoods) => ({
+
+      // Tambahkan signature baru ke excludedCombinations
+      const newSignature = newFoods
+        .map((f) => f.name)
+        .sort()
+        .join("|");
+      setExcludedCombinations((prev) => {
+        const updated = { ...prev };
+        updated[mealType] = new Set(prev[mealType]);
+        updated[mealType].add(newSignature);
+        return updated;
+      });
+
+      return {
         ...prevFoods,
         [mealType]: newFoods,
-      }));
-
-      return updated;
+      };
     });
   };
 
@@ -384,6 +389,9 @@ const FoodRecommendation = () => {
           />
         )}
         {/* tempat print */}
+        <p className="text-center mt-4 text-[10px] text-gray-400 italic">
+          @2025 -by Farhan Maulana Pangestu
+        </p>
       </div>
     </>
   );
