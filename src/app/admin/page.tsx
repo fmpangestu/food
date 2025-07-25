@@ -171,6 +171,9 @@ export default function AdminPage() {
       </div>
 
       <FoodList initialFoods={foods || lastFetched} />
+      <p className="text-center mt-4 text-[10px] text-gray-400 italic">
+        @2025 -by data fatsecret Indonesia
+      </p>
     </div>
   );
 }

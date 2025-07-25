@@ -119,7 +119,7 @@ export default function HistoryPage() {
                 return (
                   <React.Fragment key={item._id}>
                     <tr
-                      className="text-xs md:text-sm cursor-pointer hover:bg-[#e6e6e6] transition"
+                      className="text-xs md:text-sm cursor-pointer hover:bg-[#e6e6e6] transition h-10"
                       onClick={() =>
                         setExpanded(expanded === item._id ? null : item._id)
                       }
@@ -140,7 +140,7 @@ export default function HistoryPage() {
                       <td className="max-w-[100px] truncate">
                         {item.summaryInfo?.note || "-"}
                       </td>
-                      <td className="relative flex items-center justify-center gap-2 ">
+                      <td className="relative flex items-center justify-center gap-2 top-2 ">
                         <button
                           className="px-2 py-1 bg-red-500 text-white rounded"
                           onClick={(e) => {
