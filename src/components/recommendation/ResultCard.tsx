@@ -3,6 +3,7 @@ import { SelectedFoods } from "@/types/food";
 import MealCard from "./MealCard";
 import { Food } from "@/app/formFood/page";
 import { toast } from "sonner";
+import { Sparkles } from "lucide-react";
 // pastikan path import sesuai
 
 type IdealWeight = {
@@ -118,8 +119,15 @@ const ResultCard: React.FC<ResultCardProps> = ({
           Makan Malam: {dinnerCalories} kcal
         </li>
       </ul>
+      <div className="p-[3px] flex items-center  mt-4 bg-[#F1F0E9] rounded-lg">
+        <p className=" text-sm text-[#004030] px-2 py-1 ">
+          Note: Anda dapat memilih tiga makanan ini dengan menyesuaikan
+          kebutuhan kalori kalian pada per waktu makan yaa, Good Job{" "}
+        </p>
+        <Sparkles className="w-3 h-3 text-yellow-500" />
+      </div>
     </div>
-    <div className="grid lg:grid-cols-3 gap-4 mt-4">
+    <div className="grid lg:grid-cols-3 gap-4 mt-2">
       <div className="mt-4">
         <h3 className="lg:hidden text-xl font-semibold">
           Rekomendasi Sarapan: {breakfastCalories} kcal
@@ -196,7 +204,7 @@ const ResultCard: React.FC<ResultCardProps> = ({
         }}
         disabled={saveData}
       >
-        {saveData ? "Menyimpan..." : "Simpan Pilihan"}
+        {saveData ? "Menyimpan..." : "Yuk Simpan PilihanMu😊"}
       </button>
     </div>
   </div>

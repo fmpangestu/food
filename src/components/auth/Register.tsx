@@ -25,12 +25,12 @@ export default function Register() {
     }
     setIsLoading(true);
     setError("");
-
+    const trimmedUsername = username.trim();
     try {
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username: trimmedUsername, password }),
       });
 
       const data = await response.json();

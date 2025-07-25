@@ -25,13 +25,13 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-
+    const trimmedUsername = username.trim();
     const callbackUrl = searchParams.get("callbackUrl") || "/formFood";
 
     try {
       const result = await signIn("credentials", {
         redirect: false,
-        username: username,
+        username: trimmedUsername,
         password: password,
         loginType: "user",
       });
@@ -40,7 +40,7 @@ export default function Login() {
         throw new Error(result.error);
       }
 
-      toast.success("Login berhasil! Mengarahkan...");
+      toast.success("Login berhasil! Tunggu sebentar...");
       window.location.href = callbackUrl;
     } catch (err) {
       const errorMessage =

@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
-import clientPromise from "@/lib/mongodb_atlas"; // Pastikan path alias '@' sudah dikonfigurasi di tsconfig.json
+import clientPromise from "@/lib/mongodb_atlas";
 import bcrypt from "bcrypt";
 
 export async function POST(request: Request) {
   try {
     const { username, password } = await request.json();
 
-    if (!username || !password) {
+    // Trim username (hilangkan spasi awal/akhir)
+    const trimmedUsername = (username || "").trim();
+
+    if (!trimmedUsername || !password) {
       return NextResponse.json(
         { error: "Username dan password diperlukan." },
         { status: 400 }
@@ -22,9 +25,10 @@ export async function POST(request: Request) {
     const client = await clientPromise;
     const db = client.db(process.env.MONGODB_DB);
 
+    // Cek username yang sudah di-trim
     const existingUser = await db
       .collection("users")
-      .findOne({ username: username });
+      .findOne({ username: trimmedUsername });
     if (existingUser) {
       return NextResponse.json(
         { error: "Username sudah digunakan. Silakan pilih yang lain." },
@@ -35,7 +39,7 @@ export async function POST(request: Request) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     await db.collection("users").insertOne({
-      username,
+      username: trimmedUsername, // Simpan yang sudah di-trim
       password: hashedPassword,
       createdAt: new Date(),
     });

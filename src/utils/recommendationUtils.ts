@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import cosineSimilarity from "@/lib/cosineSimilarity";
 import { Food } from "@/app/formFood/page";
@@ -413,7 +414,14 @@ export function getMultipleRecommendations(
       uniqueByKategori[food.kategori] = food;
     }
   }
-  return Object.values(uniqueByKategori).slice(0, count);
+  let resultArr = Object.values(uniqueByKategori).slice(0, count);
+
+  // --- Tambahkan randomisasi agar hasil fallback tidak selalu sama ---
+  for (let i = resultArr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [resultArr[i], resultArr[j]] = [resultArr[j], resultArr[i]];
+  }
+  return resultArr;
 }
 
 export function recommendFoods(
@@ -466,6 +474,25 @@ export function recommendFoods(
     30,
     lunchExcluded
   );
+  // const dinner = getMultipleRecommendations(
+  //   foods,
+  //   { breakfast, lunch, dinner: [] },
+  //   dailyProteinNeeds,
+  //   dailyCarbsNeeds,
+  //   dinnerCalories,
+  //   "dinner",
+  //   new Set([...breakfast, ...lunch].map((f) => f.name)),
+  //   3,
+  //   30,
+  //   dinnerExcluded
+  // );
+  const dinnerFoodsToExclude = new Set(
+    breakfast
+      .filter((f) => f.kategori === "Pokok")
+      .concat(lunch.filter((f) => f.kategori === "Pokok"))
+      .map((f) => f.name)
+  );
+
   const dinner = getMultipleRecommendations(
     foods,
     { breakfast, lunch, dinner: [] },
@@ -473,12 +500,11 @@ export function recommendFoods(
     dailyCarbsNeeds,
     dinnerCalories,
     "dinner",
-    new Set([...breakfast, ...lunch].map((f) => f.name)),
+    dinnerFoodsToExclude,
     3,
     30,
     dinnerExcluded
   );
-
   setRecommendedFoods({
     breakfast: breakfast.slice(),
     lunch: lunch.slice(),
