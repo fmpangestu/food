@@ -442,8 +442,8 @@ export function recommendFoods(
   } // Tambahan
 ) {
   const breakfastCalories = Math.round(calorieNeeds * 0.25);
-  const lunchCalories = Math.round(calorieNeeds * 0.375);
-  const dinnerCalories = Math.round(calorieNeeds * 0.375);
+  const lunchCalories = Math.round(calorieNeeds * 0.4);
+  const dinnerCalories = Math.round(calorieNeeds * 0.35);
 
   // Siapkan set untuk anti duplikat
   const breakfastExcluded = excludedCombos?.breakfast ?? new Set<string>();
