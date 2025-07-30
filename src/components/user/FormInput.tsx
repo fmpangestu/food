@@ -132,11 +132,23 @@ const FormFoodInput: React.FC<FormFoodInputProps> = ({
           <SelectContent>
             <SelectGroup>
               <SelectItem value="sedentary">
-                Sedentary (Minim aktivitas)
+                Sangat Rendah (Hampir tidak pernah berolahraga atau sangat minim
+                aktivitas fisik, misal: duduk di kantor/sekolah, aktivitas
+                harian ringan di rumah)
               </SelectItem>
-              <SelectItem value="light">Ringan (1-3 hari/minggu)</SelectItem>
-              <SelectItem value="moderate">Sedang (3-5 hari/minggu)</SelectItem>
-              <SelectItem value="active">Aktif (6-7 hari/minggu)</SelectItem>
+              <SelectItem value="light">
+                Ringan (Olahraga ringan 1-3 hari/minggu, misal: jalan kaki
+                santai, naik turun tangga, bersepeda santai)
+              </SelectItem>
+              <SelectItem value="moderate">
+                Sedang (Olahraga sedang 3-5 hari/minggu, misal: jogging, senam
+                aerobik, bersepeda sedang)
+              </SelectItem>
+              <SelectItem value="active">
+                Tinggi (Olahraga berat 6-7 hari/minggu atau pekerjaan fisik
+                berat, misal: olahraga kompetitif, pekerja lapangan, buruh
+                angkut)
+              </SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>

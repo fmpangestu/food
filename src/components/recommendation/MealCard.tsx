@@ -2,6 +2,8 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Food } from "@/app/formFood/page";
 import { FoodUI, SelectedFoods } from "@/types/food";
+import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 
 interface MealCardProps {
   foods: FoodUI[];
@@ -46,6 +48,31 @@ export default function MealCard({
 
   return (
     <div className="mt-2 bg-[#F1F0E9] rounded-lg p-4">
+      {selectedFoods[mealType].length > 0 && (
+        <div className="mb-3">
+          <span className="font-semibold text-[#0D4715]">
+            Makanan terpilih:
+          </span>
+          <ul className="list-disc ml-5 text-[#0D4715] text-sm">
+            {selectedFoods[mealType].map((food) => (
+              <li
+                key={food.name}
+                className="flex justify-between items-center gap-2"
+              >
+                {food.name}
+                <button
+                  type="button"
+                  className="ml-2 text-red-500 hover:underline text-xs"
+                  onClick={() => onSelectFood(mealType, food)}
+                  title="Hapus dari pilihan"
+                >
+                  <Trash2 className="h-3 w-3 md:h-4 md:w-4" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="flex justify-between items-center border-b border-[#00712D]/30 pb-2 mb-3">
         <h2 className="font-semibold text-sm lg:text-lg text-[#0D4715]">
           {mealTitle}
@@ -68,7 +95,18 @@ export default function MealCard({
               checked={selectedFoods[mealType].some(
                 (f) => f.name === food.name
               )}
-              onCheckedChange={() => onSelectFood(mealType, food)}
+              onCheckedChange={() => {
+                const isSelected = selectedFoods[mealType].some(
+                  (f) => f.name === food.name
+                );
+                if (!isSelected && selectedFoods[mealType].length >= 3) {
+                  toast.error(
+                    "Maksimal hanya bisa memilih 3 makanan per waktu makan."
+                  );
+                  return;
+                }
+                onSelectFood(mealType, food);
+              }}
             />
             <div className="font-bold mt-2 mb-1">{food.name}</div>
             <div className="grid grid-cols-2 gap-2 text-sm">
