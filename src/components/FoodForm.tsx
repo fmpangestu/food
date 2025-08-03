@@ -137,7 +137,6 @@ export default function FoodForm({ initialData }: FoodFormProps) {
             onChange={handleChange}
             className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
             required
-            disabled={isSubmitting || (isEditMode && field.name === "Menu")}
           />
         </div>
       ))}
