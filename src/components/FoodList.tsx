@@ -16,13 +16,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "./ui/alert-dialog";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 // import { Keyboard } from "lucide-react";
 
 interface FoodListProps {
   // Ganti nama prop agar lebih jelas dan sesuai dengan AdminPage
   initialFoods: Food[];
 }
-
+const ITEMS_PER_PAGE = 10;
 export default function FoodList({ initialFoods }: FoodListProps) {
   const [foods, setFoods] = useState<Food[]>(initialFoods);
   const [searchTerm, setSearchTerm] = useState("");
@@ -30,6 +31,7 @@ export default function FoodList({ initialFoods }: FoodListProps) {
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     setFoods(initialFoods);
@@ -49,7 +51,11 @@ export default function FoodList({ initialFoods }: FoodListProps) {
   const filteredFoods = (Array.isArray(foods) ? foods : []).filter((food) =>
     food.Menu.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
+  const totalPages = Math.ceil(filteredFoods.length / ITEMS_PER_PAGE);
+  const paginatedFoods = filteredFoods.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
   const openDeleteConfirmation = (foodName: string) => {
     setFoodToDelete(foodName);
     setIsAlertOpen(true);
@@ -119,8 +125,7 @@ export default function FoodList({ initialFoods }: FoodListProps) {
             </tr>
           </thead>
 
-          <tbody>
-            {filteredFoods.length > 0 ? (
+          {/* {filteredFoods.length > 0 ? (
               [...filteredFoods]
                 .sort((a, b) => a.Menu.localeCompare(b.Menu))
                 .map((food) => (
@@ -177,11 +182,83 @@ export default function FoodList({ initialFoods }: FoodListProps) {
                     : "Tidak ada makanan tersedia"}
                 </td>
               </tr>
+            )} */}
+          <tbody>
+            {paginatedFoods.length > 0 ? (
+              paginatedFoods.map((food, idx) => (
+                <tr
+                  key={String(food._id) || food.Menu}
+                  className="hover:bg-gray-100"
+                >
+                  <td className="border p-2 text-center">
+                    {(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}
+                  </td>
+                  <td className="border p-2">
+                    {food.Menu.split(" ")
+                      .map(
+                        (word) => word.charAt(0).toUpperCase() + word.slice(1)
+                      )
+                      .join(" ")}
+                  </td>
+                  <td className="border p-2">{food["Energy (kcal)"]}</td>
+                  <td className="border p-2">{food["Protein (g)"]}</td>
+                  <td className="border p-2">{food["Fat (g)"]}</td>
+                  <td className="border p-2">{food["Carbohydrates (g)"]}</td>
+                  <td className="border p-2">{food["Sugar (g)"] ?? "N/A"}</td>
+                  <td className="border p-2">{food["Sodium (mg)"]}</td>
+                  <td className="border p-2">{food["Portion Size (g)"]}</td>
+                  <td className="border p-2">{food.kategori}</td>
+                  <td className="border p-2">
+                    <div className="flex space-x-2">
+                      <Link
+                        href={`/admin/edit-food/${encodeURIComponent(
+                          food.Menu
+                        )}`}
+                        className="bg-blue-500 text-white w-1/2 px-1 flex justify-center items-center text-center py-1 rounded-md hover:bg-blue-600 text-sm"
+                      >
+                        Edit
+                      </Link>
+                      <Button
+                        onClick={() => openDeleteConfirmation(food.Menu)}
+                        className="bg-red-500 text-white w-1/2 px-1 text-center py-1 rounded-md hover:bg-red-600 text-sm"
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={11} className="border p-4 text-center">
+                  {searchTerm
+                    ? "Tidak ada makanan yang cocok"
+                    : "Tidak ada makanan tersedia"}
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
       </div>
-
+      <div className="flex justify-center items-center gap-2 mt-4">
+        <Button
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage((p) => p - 1)}
+          className="w-8 h-8 rounded-full  text-white flex items-center justify-center font-bold text-lg shadow  transition py-[2px] disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <ChevronLeftIcon className="h-4 w-4" />
+        </Button>
+        <span>
+          Page {currentPage} of {totalPages}
+        </span>
+        <Button
+          disabled={currentPage === totalPages || totalPages === 0}
+          onClick={() => setCurrentPage((p) => p + 1)}
+          className="w-8 h-8 rounded-full  text-white flex items-center justify-center font-bold text-lg shadow  transition py-[2px] disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <ChevronRightIcon className="h-4 w-4" />
+        </Button>
+      </div>
       {/* ... AlertDialog ... */}
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
