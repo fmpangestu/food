@@ -48,9 +48,12 @@ export default function FoodList({ initialFoods }: FoodListProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const filteredFoods = (Array.isArray(foods) ? foods : []).filter((food) =>
-    food.Menu.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredFoods = (Array.isArray(foods) ? foods : [])
+    .filter((food) =>
+      food.Menu.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => a.Menu.localeCompare(b.Menu)); // <-- sort by name
+
   const totalPages = Math.ceil(filteredFoods.length / ITEMS_PER_PAGE);
   const paginatedFoods = filteredFoods.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
