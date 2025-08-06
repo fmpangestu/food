@@ -12,6 +12,17 @@ import {
 } from "../ui/select";
 import { SmilePlusIcon, Sparkles, UploadCloud } from "lucide-react";
 
+export function getAgeFromBirthDate(birthDate: string): string {
+  if (!birthDate) return "";
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age.toString();
+}
 interface FormData {
   weight: string;
   height: string;
@@ -43,7 +54,7 @@ const FormFoodInput: React.FC<FormFoodInputProps> = ({
   showSave,
   onSave,
 }) => (
-  <form className="space-y-4" onSubmit={onSubmit}>
+  <form className="space-y-4 " onSubmit={onSubmit}>
     <div className="grid grid-cols-2 gap-2">
       <div>
         <Label className="block mb-2" htmlFor="weight">
@@ -84,31 +95,24 @@ const FormFoodInput: React.FC<FormFoodInputProps> = ({
           id="age"
           name="age"
           value={formData.age}
-          onChange={onChange}
-          className="text-[#0d1821] bg-white outline-none rounded-sm p-2 w-full"
+          className="text-[#0d1821] bg-gray-100 outline-none rounded-sm p-2 w-full"
           required
+          readOnly
         />
       </div>
       <div>
         <Label className="block mb-2" htmlFor="gender">
           Jenis Kelamin
         </Label>
-        <Select
-          value={formData.gender}
-          onValueChange={(value) =>
-            onChange({ target: { name: "gender", value } } as any)
-          }
-        >
-          <SelectTrigger className="w-full text-[#0d1821] bg-white  p-2 rounded-sm">
-            <SelectValue placeholder="Pilih jenis kelamin" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectItem value="male">Laki-laki</SelectItem>
-              <SelectItem value="female">Perempuan</SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+        <Input
+          type="text"
+          id="gender"
+          name="gender"
+          value={formData.gender === "male" ? "Laki-laki" : "Perempuan"}
+          className="text-[#0d1821] bg-gray-100 outline-none rounded-sm p-2 w-full"
+          required
+          readOnly
+        />
       </div>
     </div>
     <div
@@ -156,15 +160,15 @@ const FormFoodInput: React.FC<FormFoodInputProps> = ({
       {showSave && (
         <button
           type="button"
-          className={`relative flex group justify-center items-center text-center w-full bg-neutral-100/10 border-t border-l border-neutral-400/10 shadow-[3px_3px_3px_rgba(0,0,0,0.089)]    font-semibold text-white py-[5px] mt-[22px] px-4 rounded overflow-hidden transition-all duration-500 ease-in-out`}
+          className={`relative flex group justify-center items-center text-center w-full bg-neutral-100/10 border-t border-l border-neutral-400/10 shadow-[3px_3px_3px_rgba(0,0,0,0.089)] font-semibold text-white py-[5px] mt-[22px] px-4 rounded overflow-hidden transition-all duration-500 ease-in-out`}
           onClick={onSave}
           disabled={saving}
         >
           <UploadCloud
-            className={` absolute  group-hover:-translate-y-10 -translate-x-16 h-4 w-4 transition-all text-white duration-1000 ease-in-out mr-5`}
+            className={` absolute  group-hover:-translate-y-10 -translate-x-20 h-4 w-4 transition-all text-white duration-1000 ease-in-out mr-5`}
           />
-          <SmilePlusIcon className="absolute translate-y-10 group-hover:translate-y-0 -translate-x-16 h-4 w-4 transition-all text-white duration-1000 ease-in-out mr-5" />
-          {saving ? "Menyimpan..." : "Simpan Data Mu"}
+          <SmilePlusIcon className="absolute translate-y-10 group-hover:translate-y-0 -translate-x-20 h-4 w-4 transition-all text-white duration-1000 ease-in-out mr-5" />
+          {saving ? "Menyimpan..." : "Simpan Data Kamu"}
         </button>
       )}
     </div>

@@ -7,7 +7,9 @@ import { handleSelectFood, SelectedFoods } from "./checkboxLogic";
 import { saveSelection } from "./saveSelection";
 import { useSession } from "next-auth/react";
 // import MealCard from "@/components/recommendation/MealCard";
-import FormFoodInput from "@/components/user/FormInput";
+import FormFoodInput, {
+  getAgeFromBirthDate,
+} from "@/components/user/FormInput";
 import {
   validateForm,
   calculateIdealWeight,
@@ -22,6 +24,8 @@ import {
 import { getNewMealRecommendations } from "@/utils/newMealUtils";
 import ResultCard from "@/components/recommendation/ResultCard";
 import { getKategori } from "@/utils/foodKategori";
+import EditProfileModal from "@/components/user/EditProfileModal";
+
 export interface Food {
   name: string;
   calories: number;
@@ -34,13 +38,27 @@ export interface Food {
   kategori: string;
 }
 const FoodRecommendation = () => {
+  const [showEdit, setShowEdit] = useState(false);
+  const { data: session } = useSession();
   const [formData, setFormData] = useState({
     weight: "",
     height: "",
     age: "",
-    gender: "male",
+    gender: "",
     activityLevel: "sedentary",
   });
+
+  // Update formData saat session berubah
+  useEffect(() => {
+    if (session?.user) {
+      console.log(session.user);
+      setFormData((prev) => ({
+        ...prev,
+        age: getAgeFromBirthDate(session.user.birthDate || ""),
+        gender: session.user.gender || "",
+      }));
+    }
+  }, [session]);
   const [foods, setFoods] = useState<Food[]>([]);
   const [recommendedFoods, setRecommendedFoods] = useState<{
     breakfast: Food[];
@@ -104,7 +122,7 @@ const FoodRecommendation = () => {
   const onSelectFood = (meal: keyof SelectedFoods, food: Food) => {
     setSelectedFoods((prev) => handleSelectFood(prev, meal, food));
   };
-  const { data: session } = useSession();
+
   const userId = session?.user?.id;
   // Gunakan useRef untuk konsistensi usedFoodNames
   const usedFoodNames = useRef<Set<string>>(new Set());
@@ -316,7 +334,7 @@ const FoodRecommendation = () => {
   // reff print
   return (
     <>
-      <Navbar />
+      <Navbar setShowEdit={setShowEdit} />
       {profileLoading && (
         <div
           style={{ animation: "fadeInUp 0.7s cubic-bezier(.4,0,.2,1)" }}
@@ -393,6 +411,17 @@ const FoodRecommendation = () => {
           @2025 -by Farhan Maulana Pangestu
         </p>
       </div>
+      {showEdit && session?.user && (
+        <EditProfileModal
+          open={showEdit}
+          onClose={() => setShowEdit(false)}
+          user={{
+            id: session.user.id,
+            name: session.user.name || "",
+            birthDate: session.user.birthDate,
+          }}
+        />
+      )}
     </>
   );
 };

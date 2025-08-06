@@ -170,6 +170,7 @@ export default function HistoryPage() {
                             <b>Catatan:</b> {item.summaryInfo?.note || "-"}
                           </div>
                           <div className="mb-2 text-xs text-gray-600">
+                            <b>Berat Badan :</b> {item.formData?.weight} kg |
                             <b>Kebutuhan Kalori:</b>{" "}
                             {item.summaryInfo?.calorieNeeds} kcal |
                             <b> Protein:</b>{" "}

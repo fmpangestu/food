@@ -195,7 +195,7 @@ export default function AdminPage() {
       ) : (
         ""
       )}
-      {/* <div className="flex gap-2 mb-4 min-w-full  justify-center items-center">
+      <div className="flex gap-2 mb-4 min-w-full  justify-center items-center">
         <button
           className={`px-4 py-1 w-full rounded ${
             activeTab === "foods" ? "bg-green-700 text-white" : "bg-gray-200"
@@ -212,7 +212,7 @@ export default function AdminPage() {
         >
           Data User
         </button>
-      </div> */}
+      </div>
       {activeTab === "foods" ? (
         <>
           {/* ...existing code... */}

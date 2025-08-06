@@ -65,6 +65,9 @@ select option:hover {
     --chart-5: 340 75% 55%;
   }
 }
+.front {
+  z-index: 9999 !important;
+}
 
 @layer base {
   * {
