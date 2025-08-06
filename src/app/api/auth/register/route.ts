@@ -4,11 +4,16 @@ import bcrypt from "bcrypt";
 
 export async function POST(request: Request) {
   try {
-    const { username, password } = await request.json();
+    const { username, password, birthDate, gender } = await request.json();
 
     // Trim username (hilangkan spasi awal/akhir)
     const trimmedUsername = (username || "").trim();
-
+    if (!birthDate || !gender) {
+      return NextResponse.json(
+        { error: "Tanggal lahir dan jenis kelamin diperlukan." },
+        { status: 400 }
+      );
+    }
     if (!trimmedUsername || !password) {
       return NextResponse.json(
         { error: "Username dan password diperlukan." },
@@ -41,6 +46,8 @@ export async function POST(request: Request) {
     await db.collection("users").insertOne({
       username: trimmedUsername, // Simpan yang sudah di-trim
       password: hashedPassword,
+      birthDate,
+      gender,
       createdAt: new Date(),
     });
 

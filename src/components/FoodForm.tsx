@@ -109,13 +109,13 @@ export default function FoodForm({ initialData }: FoodFormProps) {
 
   const formFields: { name: keyof FormData; label: string; type: string }[] = [
     { name: "Menu", label: "Nama Makanan", type: "text" },
-    { name: "Energy (kcal)", label: "Kalori (kcal)", type: "number" },
-    { name: "Protein (g)", label: "Protein (g)", type: "number" },
-    { name: "Fat (g)", label: "Lemak (g)", type: "number" },
-    { name: "Carbohydrates (g)", label: "Karbohidrat (g)", type: "number" },
-    { name: "Sugar (g)", label: "Gula (g)", type: "number" },
-    { name: "Sodium (mg)", label: "Sodium (mg)", type: "number" },
-    { name: "Portion Size (g)", label: "Porsi (g)", type: "number" },
+    { name: "Energy (kcal)", label: "Kalori (kcal)", type: "text" },
+    { name: "Protein (g)", label: "Protein (g)", type: "text" },
+    { name: "Fat (g)", label: "Lemak (g)", type: "text" },
+    { name: "Carbohydrates (g)", label: "Karbohidrat (g)", type: "text" },
+    { name: "Sugar (g)", label: "Gula (g)", type: "text" },
+    { name: "Sodium (mg)", label: "Sodium (mg)", type: "text" },
+    { name: "Portion Size (g)", label: "Porsi (g)", type: "text" },
   ];
 
   return (

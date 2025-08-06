@@ -58,12 +58,29 @@ export function calculateCalorieNeeds(
   } else {
     bmr = 10 * weight + 6.25 * height - 5 * age - 161;
   }
-  const activityFactors: { [key: string]: number } = {
-    sedentary: 1.2,
-    light: 1.375,
-    moderate: 1.55,
-    active: 1.725,
-  };
+  let activityFactors: { [key: string]: number };
+  if (gender === "male") {
+    activityFactors = {
+      sedentary: 1.2,
+      light: 1.5,
+      moderate: 1.8,
+      active: 2.1,
+    };
+  } else {
+    activityFactors = {
+      sedentary: 1.2,
+      light: 1.5,
+      moderate: 1.7,
+      active: 1.8,
+    };
+  }
+
+  // const activityFactors: { [key: string]: number } = {
+  //   sedentary: 1.2,
+  //   light: 1.5,
+  //   moderate: 1.8,
+  //   active: 2.1,
+  // };
   return Math.round(bmr * (activityFactors[activityLevel] || 1.2));
 }
 

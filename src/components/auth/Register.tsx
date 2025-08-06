@@ -1,10 +1,22 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
-
-// import { useState } from "react"; // Sudah diimpor
-import { Eye, EyeOff } from "lucide-react"; // Sudah diimpor
-import { toast } from "sonner"; // Sudah diimpor
+import { format } from "date-fns";
+import { Eye, EyeOff, Calendar as CalendarIcon } from "lucide-react";
+import { toast } from "sonner";
+import { Label } from "../ui/label";
+import { Button } from "../ui/button";
+import { Calendar } from "../ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 export default function Register() {
   const [username, setUsername] = useState("");
@@ -14,13 +26,14 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [birthDate, setBirthDate] = useState<Date | undefined>(undefined);
+  const [gender, setGender] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
       setError("Password dan konfirmasi password tidak cocok.");
       toast.error("Password tidak cocok.");
-      //   alert("Password tidak cocok.");
       return;
     }
     setIsLoading(true);
@@ -30,7 +43,12 @@ export default function Register() {
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: trimmedUsername, password }),
+        body: JSON.stringify({
+          username: trimmedUsername,
+          password,
+          birthDate: birthDate ? birthDate.toISOString().slice(0, 10) : "", // format YYYY-MM-DD
+          gender,
+        }),
       });
 
       const data = await response.json();
@@ -39,14 +57,12 @@ export default function Register() {
       }
 
       toast.success("Registrasi berhasil! Silakan masuk.");
-      //   alert("Registrasi berhasil! Silakan masuk.");
       window.location.reload();
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Terjadi kesalahan";
       setError(errorMessage);
       toast.error(errorMessage);
-      //   alert(`Error: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -84,6 +100,58 @@ export default function Register() {
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
           />
         </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Tanggal Lahir
+            </label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  data-empty={!birthDate}
+                  className="data-[empty=true]:text-muted-foreground w-full justify-start text-left font-normal"
+                  type="button"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {birthDate ? (
+                    format(birthDate, "PPP")
+                  ) : (
+                    <span>Pilih tanggal lahir</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={birthDate}
+                  onSelect={setBirthDate}
+                  captionLayout="dropdown"
+                  fromYear={1950}
+                  toYear={new Date().getFullYear()}
+                  required
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div>
+            <Label className="block mb-2" htmlFor="gender">
+              Jenis Kelamin
+            </Label>
+            <Select value={gender} onValueChange={(e) => setGender(e as any)}>
+              <SelectTrigger className="w-full text-[#0d1821] bg-white  p-2 rounded-sm">
+                <SelectValue placeholder="Pilih jenis kelamin" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="male">Laki-laki</SelectItem>
+                  <SelectItem value="female">Perempuan</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        {/* ...password & confirm password fields... */}
         <div>
           <label
             htmlFor="password-register"

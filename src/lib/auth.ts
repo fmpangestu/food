@@ -3,12 +3,15 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import clientPromise from "@/lib/mongodb_atlas"; // Pastikan path ini benar
 import bcrypt from "bcryptjs";
+import { ObjectId } from "mongodb";
 const ADMINS = [
   {
     email: "admin@gmail.com",
     password: "sukasehat", // Untuk produksi, gunakan hash atau variabel env
     name: "Admin",
     role: "admin",
+    birthDate: "2000-01-01",
+    gender: "male",
   },
 ];
 
@@ -36,6 +39,8 @@ export const authOptions: NextAuthOptions = {
               name: adminUser.name,
               email: adminUser.email,
               role: adminUser.role,
+              birthDate: adminUser.birthDate,
+              gender: adminUser.gender,
             };
           }
           // Jika login admin gagal, lempar error
@@ -69,6 +74,8 @@ export const authOptions: NextAuthOptions = {
             name: user.username,
             email: null,
             role: user.role || "user",
+            birthDate: user.birthDate || "",
+            gender: user.gender || "",
           };
         }
 
@@ -82,20 +89,36 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
-    // Callback ini akan dijalankan untuk menambahkan 'role' ke dalam token JWT
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
+      // Saat login, isi token dari user
       if (user) {
         token.role = user.role;
         token.id = user.id;
+        token.birthDate = user.birthDate;
+        token.gender = user.gender;
+        token.name = user.name; // tambahkan ini jika ingin update name
+      }
+      // Saat update profile (trigger === "update"), update token dari session
+      if (trigger === "update" && session) {
+        if (session.name) token.name = session.name;
+        if (session.birthDate) token.birthDate = session.birthDate;
+        if (session.gender) token.gender = session.gender;
       }
       return token;
     },
-    // Callback ini akan dijalankan untuk menambahkan 'role' ke data sesi
     async session({ session, token }) {
-      if (session?.user) {
-        session.user.role = token.role;
-
-        session.user.id = token.id;
+      // Ambil data user terbaru dari database
+      const client = await clientPromise;
+      const db = client.db(process.env.MONGODB_DB);
+      const user = await db
+        .collection("users")
+        .findOne({ _id: new ObjectId(token.id) });
+      if (user && session.user) {
+        session.user.name = user.username;
+        session.user.birthDate = user.birthDate;
+        session.user.gender = user.gender;
+        session.user.role = user.role;
+        session.user.id = user._id.toString();
       }
       return session;
     },
