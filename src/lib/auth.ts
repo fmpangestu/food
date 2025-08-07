@@ -96,7 +96,8 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.birthDate = user.birthDate;
         token.gender = user.gender;
-        token.name = user.name; // tambahkan ini jika ingin update name
+        token.name = user.name;
+        token.email = user.email;
       }
       // Saat update profile (trigger === "update"), update token dari session
       if (trigger === "update" && session) {
@@ -107,18 +108,40 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      // Ambil data user terbaru dari database
-      const client = await clientPromise;
-      const db = client.db(process.env.MONGODB_DB);
-      const user = await db
-        .collection("users")
-        .findOne({ _id: new ObjectId(token.id) });
-      if (user && session.user) {
-        session.user.name = user.username;
-        session.user.birthDate = user.birthDate;
-        session.user.gender = user.gender;
-        session.user.role = user.role;
-        session.user.id = user._id.toString();
+      if (token.email && token.role === "admin") {
+        // Admin statis - pakai data dari token
+        if (session.user) {
+          session.user.name = token.name as string;
+          session.user.birthDate = token.birthDate as string;
+          session.user.gender = token.gender as string;
+          session.user.role = token.role as string;
+          session.user.id = token.id as string;
+          session.user.email = token.email as string;
+        }
+      } else {
+        // User biasa - ambil dari database
+        try {
+          const client = await clientPromise;
+          const db = client.db(process.env.MONGODB_DB);
+          const user = await db
+            .collection("users")
+            .findOne({ _id: new ObjectId(token.id) });
+          if (user && session.user) {
+            session.user.name = user.username;
+            session.user.birthDate = user.birthDate;
+            session.user.gender = user.gender;
+            session.user.role = user.role;
+            session.user.id = user._id.toString();
+          }
+        } catch (error) {
+          console.error("Error fetching user from database:", error);
+          // Fallback ke data token jika error
+          if (session.user) {
+            session.user.name = token.name as string;
+            session.user.role = token.role as string;
+            session.user.id = token.id as string;
+          }
+        }
       }
       return session;
     },

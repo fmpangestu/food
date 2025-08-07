@@ -7,7 +7,15 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Food } from "../types/food";
 import { Button } from "./ui/button";
-
+import { Label } from "./ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 type FormData = Omit<Food, "_id">;
 
 type FormDisplayState = {
@@ -63,6 +71,13 @@ export default function FoodForm({ initialData }: FoodFormProps) {
     setFormData((prev) => ({
       ...prev,
       [name]: type === "number" ? parseFloat(value) || 0 : value,
+    }));
+  };
+
+  const handleSelectChange = (value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      kategori: value,
     }));
   };
 
@@ -141,24 +156,23 @@ export default function FoodForm({ initialData }: FoodFormProps) {
         </div>
       ))}
       <div>
-        <label className="block text-sm font-medium text-gray-700">
+        <Label className="block text-sm font-medium text-gray-700">
           Kategori
-        </label>
-        <select
-          name="kategori"
-          value={formData.kategori}
-          onChange={handleChange}
-          className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-          required
-          disabled={isSubmitting}
-        >
-          <option value="">-- Pilih Kategori --</option>
-          <option value="Pokok">Pokok</option>
-          <option value="Lauk Hewani">Lauk Hewani</option>
-          <option value="Lauk Nabati">Lauk Nabati</option>
-          <option value="Sayur">Sayur</option>
-          <option value="Buah">Buah</option>
-        </select>
+        </Label>
+        <Select value={formData.kategori} onValueChange={handleSelectChange}>
+          <SelectTrigger className="w-full text-[#0d1821] bg-white p-2 rounded-md border border-gray-300">
+            <SelectValue placeholder="-- Pilih Kategori --" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="Pokok">Pokok</SelectItem>
+              <SelectItem value="Lauk Hewani">Lauk Hewani</SelectItem>
+              <SelectItem value="Lauk Nabati">Lauk Nabati</SelectItem>
+              <SelectItem value="Sayur">Sayur</SelectItem>
+              <SelectItem value="Buah">Buah</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex gap-4 pt-4">

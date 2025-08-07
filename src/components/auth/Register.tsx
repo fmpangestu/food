@@ -110,10 +110,10 @@ export default function Register() {
                 <Button
                   variant="outline"
                   data-empty={!birthDate}
-                  className="data-[empty=true]:text-muted-foreground w-full justify-start text-left font-normal"
+                  className="data-[empty=true]:text-muted-foreground w-full justify-start text-left text-xs md:text-sm font-normal"
                   type="button"
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <CalendarIcon className="md:mr-2 h-4 w-4" />
                   {birthDate ? (
                     format(birthDate, "PPP")
                   ) : (
