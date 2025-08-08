@@ -47,39 +47,38 @@ export default function MealCard({
   else if (mealType === "dinner") mealTitle = "Makan Malam";
 
   return (
-    <div className="mt-2 bg-[#F1F0E9] rounded-lg p-4">
+    <div className="mt-2 bg-neutral-100/10 border-t border-l border-neutral-400/10 shadow-[3px_3px_3px_rgba(0,0,0,0.089)] font-semibold text-white rounded-lg p-4">
       {selectedFoods[mealType].length > 0 && (
         <div className="mb-3">
-          <span className="font-semibold text-[#0D4715]">
-            Makanan terpilih:
-          </span>
-          <ul className="list-disc ml-5 text-[#0D4715] text-sm">
+          <span className="font-semibold text-white">Makanan terpilih:</span>
+          <ul className="list-disc  ml-5 text-white text-sm">
             {selectedFoods[mealType].map((food) => (
               <li
                 key={food.name}
-                className="flex justify-between items-center gap-2"
+                className="flex justify-between items-center gap-2 mt-1"
               >
-                {food.name}
+                {food.name} ({food.calories} kcal)
                 <button
                   type="button"
-                  className="ml-2 text-red-500 hover:underline text-xs"
+                  className="flex justify-center items-center gap-2 bg-white  rounded-md p-1 text-red-500 text-xs"
                   onClick={() => onSelectFood(mealType, food)}
                   title="Hapus dari pilihan"
                 >
                   <Trash2 className="h-3 w-3 md:h-4 md:w-4" />
+                  Hapus ?
                 </button>
               </li>
             ))}
           </ul>
         </div>
       )}
-      <div className="flex justify-between items-center border-b border-[#00712D]/30 pb-2 mb-3">
-        <h2 className="font-semibold text-sm lg:text-lg text-[#0D4715]">
+      <div className="flex justify-between items-center border-b border-white/30 pb-2 mb-3">
+        <h2 className="font-semibold text-sm lg:text-lg text-white">
           {mealTitle}
         </h2>
         <button
           onClick={() => getNewMealRecommendations(mealType)}
-          className="bg-[#E9762B] text-white italic py-1 px-4 text-[10px] lg:text-sm rounded-md font-medium hover:bg-[#E9762B]/60 transition-colors"
+          className="text-xs md:text-sm bg-neutral-100/10 border-t border-l border-neutral-400/10 shadow-[3px_3px_3px_rgba(0,0,0,0.089)]  text-white rounded-lg p-1.5 transition-colors"
         >
           Ganti Rekomendasi
         </button>
@@ -88,7 +87,7 @@ export default function MealCard({
         {foods.map((food, index) => (
           <div
             key={index}
-            className="relative p-3 bg-gradient-to-r from-[#004030] to-[#41644A] rounded-lg"
+            className="relative p-3 bg-transparent text-white rounded-lg"
           >
             <Checkbox
               className="absolute z-96 right-4 top-2 h-4 w-4"
@@ -109,43 +108,43 @@ export default function MealCard({
               }}
             />
             <div className="font-bold mt-2 mb-1">{food.name}</div>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
+            <div className="grid grid-cols-2 gap-2 text-sm text-[#0D4715]">
+              <div className="bg-[white] p-2 rounded-lg">
                 <span className="font-semibold">Kalori:</span> {food.calories}{" "}
                 kcal
               </div>
-              <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
+              <div className="bg-[white] p-2 rounded-lg">
                 <span className="font-semibold">Protein:</span> {food.protein} g
               </div>
-              <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
+              <div className="bg-[white] p-2 rounded-lg">
                 <span className="font-semibold">Lemak:</span> {food.fat} g
               </div>
-              <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
+              <div className="bg-[white] p-2 rounded-lg">
                 <span className="font-semibold">Karbohidrat:</span> {food.carbs}{" "}
                 g
               </div>
-              <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
+              <div className="bg-[white] p-2 rounded-lg">
                 <span className="font-semibold">Sodium:</span> {food.sodium} mg
               </div>
-              <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
+              <div className="bg-[white] p-2 rounded-lg">
                 <span className="font-semibold">Gula:</span> {food.sugar} g
               </div>
-              <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
+              <div className="bg-[white] p-2 rounded-lg">
                 <span className="font-semibold">Porsi:</span>{" "}
                 {food.porpotionSize || 100}g
               </div>
-              <div className="bg-[#D5ED9F]/20 p-2 rounded-lg">
+              <div className="bg-[white] p-2 rounded-lg">
                 <span className="font-semibold">Kategori:</span> {food.kategori}
               </div>
             </div>
           </div>
         ))}
         <div className="mb-4">
-          <div className="flex items-center justify-between mb-1 text-[#0D4715]">
+          <div className="flex items-center justify-between mb-1 text-white">
             <span className="font-semibold">Total Kalori Pilihan:</span>
             <span>{selectedCalories} kcal dari target</span>
           </div>
-          <div className="bg-[#0D4715]/20 rounded-full h-2">
+          <div className="bg-white/20 rounded-full h-2">
             <div
               className={`h-2 rounded-full 
         ${selectedCaloriePercentage > 100 ? "bg-red-500" : "bg-[#E9762B]"}`}
